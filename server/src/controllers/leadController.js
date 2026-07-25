@@ -13,7 +13,7 @@ const {
 const create = async (req, res) => {
   try {
 
-    const lead = await createLead(req.body);
+    const lead = await createLead(req.body, req.user.id);
 
     res.status(201).json({
       success:true,
@@ -111,7 +111,8 @@ const assign = async (req, res) => {
 
     const lead = await assignLead(
       req.params.id,
-      assignedTo
+      assignedTo,
+      req.user.id
     );
 
 
@@ -207,7 +208,8 @@ const updateStatus = async (req, res) => {
 
     const lead = await updateLeadStatus(
       req.params.id,
-      status
+      status,
+      req.user.id
     );
 
 

@@ -1,6 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
+const validate = require("../middleware/validate");
 
 
 const {
@@ -12,6 +13,12 @@ const {
   assign,
   remove,
 } = require("../controllers/leadController");
+
+const {
+  createLeadSchema,
+  updateStatusSchema,
+  assignLeadSchema,
+} = require("../validations/leadValidation");
 
 
 const {
@@ -27,6 +34,7 @@ const authorize = require("../middleware/authorize");
 router.post(
   "/",
   authenticate,
+   validate(createLeadSchema),
   create
 );
 
@@ -51,6 +59,7 @@ router.get(
 router.patch(
   "/:id",
   authenticate,
+  validate(updateStatusSchema),
   update
 );
 
@@ -58,6 +67,7 @@ router.patch(
   "/:id/assign",
   authenticate,
   authorize("admin"),
+  validate(assignLeadSchema),
   assign
 );
 

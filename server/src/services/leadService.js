@@ -1,9 +1,22 @@
 const Lead = require("../models/Lead");
+const {createActivity} = require("./activityService");
+
 
 
 // Create Lead
-const createLead = async (data) => {
-  return await Lead.create(data);
+const createLead = async (data, userId) => {
+
+  const lead = await Lead.create(data);
+
+
+  await createActivity(
+    lead._id,
+    "Lead Created",
+    userId
+  );
+
+
+  return lead;
 };
 
 
@@ -118,36 +131,61 @@ const updateLead = async (id, data) => {
   );
 };
 
-const updateLeadStatus = async (leadId, status) => {
+const updateLeadStatus = async (
+  leadId,
+  status,
+  userId
+)=>{
 
-  const lead = await Lead.findByIdAndUpdate(
+
+  const lead =
+    await Lead.findByIdAndUpdate(
+      leadId,
+      {
+        status,
+      },
+      {
+        new:true,
+      }
+    );
+
+
+  await createActivity(
     leadId,
-    {
-      status,
-    },
-    {
-      new: true,
-    }
-  )
-  .populate("assignedTo", "name email role");
+    `Status Changed to ${status}`,
+    userId
+  );
 
 
   return lead;
+
 };
 
 
-const assignLead = async (leadId, userId) => {
+const assignLead = async (
+  leadId,
+  userId,
+  performedBy
+) => {
 
-  const lead = await Lead.findByIdAndUpdate(
+
+  const lead =
+    await Lead.findByIdAndUpdate(
+      leadId,
+      {
+        assignedTo:userId,
+      },
+      {
+        new:true,
+      }
+    );
+
+
+  await createActivity(
     leadId,
-    {
-      assignedTo: userId,
-    },
-    {
-      new: true,
-    }
-  )
-  .populate("assignedTo", "name email role");
+    "Lead Assigned",
+    performedBy
+  );
 
 
   return lead;
@@ -156,9 +194,36 @@ const assignLead = async (leadId, userId) => {
 
 
 // Delete Lead
-const deleteLead = async (id) => {
-  return await Lead.findByIdAndDelete(id);
+const deleteLead = async (
+  leadId,
+  userId
+)=>{
+
+
+  const lead =
+    await Lead.findById(leadId);
+
+
+  if(!lead){
+    return null;
+  }
+
+
+  await createActivity(
+    leadId,
+    "Lead Deleted",
+    userId
+  );
+
+
+  await Lead.findByIdAndDelete(
+    leadId
+  );
+
+
+  return lead;
 };
+
 
 
 module.exports = {
