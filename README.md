@@ -8,9 +8,9 @@ The application consists of a **public lead capture portal** and a **secure dash
 
 ## Live Demo
 
-**Frontend:** 
+**Frontend:** https://digital-h-mocha.vercel.app/
 
-**Backend API:** 
+**Backend API:** https://heros-4vm4.onrender.com/
 
 ---
 
