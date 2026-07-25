@@ -9,11 +9,10 @@ const createLead = async (data, userId) => {
   const lead = await Lead.create(data);
 
 
-  await createActivity(
-    lead._id,
-    "Lead Created",
-    userId
-  );
+  // Public submissions have no authenticated actor to associate with an activity.
+  if (userId) {
+    await createActivity(lead._id, "Lead Created", userId);
+  }
 
 
   return lead;
@@ -30,6 +29,8 @@ const getLeads = async (query) => {
     assignedTo,
     search,
     company,
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = query;
 
 
@@ -89,11 +90,11 @@ const getLeads = async (query) => {
   const skip = (page - 1) * limit;
 
 
+  const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
   const leads = await Lead.find(filter)
     .populate("assignedTo", "name email role")
-    .sort({
-      createdAt: -1,
-    })
+    .sort(sort)
     .skip(skip)
     .limit(Number(limit));
 
@@ -231,7 +232,7 @@ module.exports = {
   getLeads,
   getLeadById,
   updateLead,
-  updateLead,
+  updateLeadStatus,
   assignLead,
   deleteLead,
 };

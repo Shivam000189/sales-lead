@@ -55,10 +55,13 @@ const createLeadSchema = z.object({
 
 
 const updateStatusSchema = z.object({
-
-  status:z.enum(leadStatus),
-
-});
+  name: z.string().min(2, "Name is required").optional(),
+  email: z.string().email("Invalid email").optional(),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone must contain 10 digits").optional(),
+  company: z.string().optional(),
+  message: z.string().optional(),
+  status: z.enum(leadStatus).optional(),
+}).refine((data) => Object.keys(data).length > 0, "At least one field is required");
 
 
 

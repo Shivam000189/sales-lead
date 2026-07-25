@@ -14,15 +14,23 @@ const register = async (req, res) => {
 
     const user = await registerUser(name, email, password);
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
+      token,
+      user: {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       data: {
         _id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token,
       },
     });

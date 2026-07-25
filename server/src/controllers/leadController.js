@@ -13,7 +13,7 @@ const {
 const create = async (req, res) => {
   try {
 
-    const lead = await createLead(req.body, req.user.id);
+    const lead = await createLead(req.body, req.user?.id);
 
     res.status(201).json({
       success:true,

@@ -33,8 +33,8 @@ const authorize = require("../middleware/authorize");
 // Create Lead
 router.post(
   "/",
-  authenticate,
-   validate(createLeadSchema),
+  // A visitor can submit a lead from the public capture page.
+  validate(createLeadSchema),
   create
 );
 
