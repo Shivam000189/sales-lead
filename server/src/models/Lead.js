@@ -5,13 +5,11 @@ const leadSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
     },
 
     email: {
       type: String,
-      trim: true,
-      lowercase: true,
+      required: true,
     },
 
     phone: {
@@ -52,5 +50,6 @@ const leadSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
 
 module.exports = mongoose.model("Lead", leadSchema);

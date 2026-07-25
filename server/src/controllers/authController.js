@@ -43,7 +43,7 @@ const login = async (req, res) => {
 
     const user = await loginUser(email, password);
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
 
     res.json({
       success: true,

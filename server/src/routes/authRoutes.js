@@ -8,7 +8,7 @@ const {
 } = require("../controllers/authController");
 
 const {
-  authMiddleware,
+  authenticate,
 } = require("../middleware/authMiddleware");
 
 
@@ -20,9 +20,9 @@ router.post("/register", register);
 router.post("/login", login);
 
 
-router.get("/me", authMiddleware, me);
+router.get("/me", authenticate, me);
 
-router.post("/logout", authMiddleware, logout);
+router.post("/logout", authenticate, logout);
 
 
 module.exports = router;

@@ -7,9 +7,12 @@ if (!JWT_SECRET) {
 }
 
 
-const generateToken = (userId) => {
+const generateToken = (userId, role) => {
   return jwt.sign(
-    { userId },
+    {
+      userId,
+      role,
+    },
     JWT_SECRET,
     {
       expiresIn: "24h",
