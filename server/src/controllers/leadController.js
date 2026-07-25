@@ -3,6 +3,8 @@ const {
   getLeads,
   getLeadById,
   updateLead,
+  updateLeadStatus,
+  assignLead,
   deleteLead,
 } = require("../services/leadService");
 
@@ -92,6 +94,53 @@ const getOne = async(req,res)=>{
 };
 
 
+const assign = async (req, res) => {
+
+  try {
+
+    const { assignedTo } = req.body;
+
+
+    if (!assignedTo) {
+      return res.status(400).json({
+        success:false,
+        message:"assignedTo is required",
+      });
+    }
+
+
+    const lead = await assignLead(
+      req.params.id,
+      assignedTo
+    );
+
+
+    if (!lead) {
+      return res.status(404).json({
+        success:false,
+        message:"Lead not found",
+      });
+    }
+
+
+    res.json({
+      success:true,
+      message:"Lead assigned successfully",
+      data:lead,
+    });
+
+
+  } catch(error) {
+
+    res.status(500).json({
+      success:false,
+      message:error.message,
+    });
+
+  }
+};
+
+
 
 // Update Lead
 const update = async(req,res)=>{
@@ -130,6 +179,62 @@ const update = async(req,res)=>{
 
 };
 
+
+const updateStatus = async (req, res) => {
+
+  try {
+
+    const { status } = req.body;
+
+
+    const allowedStatus = [
+      "NEW",
+      "CONTACTED",
+      "QUALIFIED",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST",
+    ];
+
+
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lead status",
+      });
+    }
+
+
+    const lead = await updateLeadStatus(
+      req.params.id,
+      status
+    );
+
+
+    if (!lead) {
+      return res.status(404).json({
+        success:false,
+        message:"Lead not found",
+      });
+    }
+
+
+    res.json({
+      success:true,
+      message:"Lead status updated successfully",
+      data:lead,
+    });
+
+
+  } catch(error) {
+
+    res.status(500).json({
+      success:false,
+      message:error.message,
+    });
+
+  }
+};
 
 
 // Delete Lead
@@ -172,5 +277,7 @@ module.exports = {
   getAll,
   getOne,
   update,
+  updateStatus,
+  assign,
   remove,
 };

@@ -8,6 +8,8 @@ const {
   getAll,
   getOne,
   update,
+  updateStatus,
+  assign,
   remove,
 } = require("../controllers/leadController");
 
@@ -50,6 +52,19 @@ router.patch(
   "/:id",
   authenticate,
   update
+);
+
+router.patch(
+  "/:id/assign",
+  authenticate,
+  authorize("admin"),
+  assign
+);
+
+router.patch(
+  "/:id/status",
+  authenticate,
+  updateStatus
 );
 
 

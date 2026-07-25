@@ -118,6 +118,42 @@ const updateLead = async (id, data) => {
   );
 };
 
+const updateLeadStatus = async (leadId, status) => {
+
+  const lead = await Lead.findByIdAndUpdate(
+    leadId,
+    {
+      status,
+    },
+    {
+      new: true,
+    }
+  )
+  .populate("assignedTo", "name email role");
+
+
+  return lead;
+};
+
+
+const assignLead = async (leadId, userId) => {
+
+  const lead = await Lead.findByIdAndUpdate(
+    leadId,
+    {
+      assignedTo: userId,
+    },
+    {
+      new: true,
+    }
+  )
+  .populate("assignedTo", "name email role");
+
+
+  return lead;
+};
+
+
 
 // Delete Lead
 const deleteLead = async (id) => {
@@ -130,5 +166,7 @@ module.exports = {
   getLeads,
   getLeadById,
   updateLead,
+  updateLead,
+  assignLead,
   deleteLead,
 };
