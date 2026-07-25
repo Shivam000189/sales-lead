@@ -1,2 +1,8 @@
 .env
 node_modules
+dist
+client/dist
+server/logs
+*.log
+DEPLOYMENT.md
+.env.example
