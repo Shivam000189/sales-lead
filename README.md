@@ -1,4 +1,4 @@
-# Digital Heros
+# Sales-Lead
 
 A full-stack lead management app I built to keep lead capture, follow-ups, team ownership, notes, and activity history in one place.
 
