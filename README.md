@@ -1,375 +1,226 @@
-# Lead Management Platform
+# Digital Heros
 
-A full-stack Lead Management Platform built for small sales teams to capture, organize, assign, and manage leads throughout their lifecycle.
+A full-stack lead management app I built to keep lead capture, follow-ups, team ownership, notes, and activity history in one place.
 
-The application consists of a **public lead capture portal** and a **secure dashboard** with role-based authentication, lead assignment, activity tracking, notes, filtering, pagination, and a RESTful JSON API.
+The project has two main parts:
 
----
+- A public lead capture page where anyone can submit their details
+- A private CRM dashboard for managing leads with admin and member roles
 
-## Live Demo
+## Live Project
 
-**Frontend:** https://digital-h-mocha.vercel.app/
+Frontend: https://digital-h-mocha.vercel.app/
 
-**Backend API:** https://heros-4vm4.onrender.com/
+Backend API: https://heros-4vm4.onrender.com/
 
----
+## Why I Built This
 
-## Built For
+I wanted a practical CRM-style project that feels close to a real product: authentication, role-based access, lead lifecycle management, notes, activity tracking, filtering, pagination, and a deployed client/server setup.
 
-This project was developed as part of the **Digital Heroes Full Stack Development Training Task**.
+It is built as my own full-stack project, with the goal of practicing clean API design, protected routes, MongoDB data modeling, and a simple dashboard workflow.
 
-> **Footer Credit**
->
-> Built for Digital Heroes Training Task
->
-> https://digitalheroesco.com
+## Features
 
----
+### Public Lead Capture
 
-# Features
+- Public form for collecting lead details
+- Input validation
+- Creates new leads directly from the website
+- No login required for visitors
 
-## Public Lead Capture
+### Authentication
 
-- Public lead submission form
-- Form validation
-- Creates new leads directly in the system
-- No authentication required
+- JWT-based login
+- Password hashing with bcrypt
+- Protected dashboard routes
+- Role-based permissions
 
----
+### Roles
 
-## Authentication
-
-- JWT Authentication
-- Secure Password Hashing
-- Protected Routes
-- Role-Based Authorization
-
-Roles:
-
-- Admin
-- Member
-
----
-
-## Admin Permissions
+Admin users can:
 
 - View all leads
-- Create leads
-- Edit leads
-- Delete leads
-- Assign leads to members
+- Create, edit, and delete leads
+- Assign leads to team members
 - Update lead status
-- View activity history
 - Add notes
+- View activity history
 
----
-
-## Member Permissions
+Member users can:
 
 - View assigned leads
 - Update lead status
 - Add notes
 - View activity history
 
-Members **cannot**
+Member users cannot delete leads, assign leads, or access admin-only actions.
 
-- Delete leads
-- Assign leads
-- Access admin-only routes
+## Lead Pipeline
 
-Permissions are enforced on both the frontend and backend.
+Leads move through this lifecycle:
 
----
-
-# Lead Lifecycle
-
-Each lead moves through a complete sales pipeline.
-
-```
-New
-↓
-
-Contacted
-↓
-
-Qualified
-↓
-
-Proposal Sent
-↓
-
-Won / Lost
+```text
+NEW
+CONTACTED
+QUALIFIED
+PROPOSAL_SENT
+WON / LOST
 ```
 
-Each status change is stored in the activity log.
+Every status change is saved in the activity history.
 
----
+## Dashboard
 
-# Activity Trail
+The dashboard includes:
 
-Every important action is recorded.
-
-Examples:
-
-- Lead Created
-- Lead Updated
-- Lead Assigned
-- Status Changed
-- Note Added
-
-Each activity contains:
-
-- User
-- Action
-- Timestamp
-
----
-
-# Notes System
-
-Each lead supports multiple notes.
-
-Each note includes:
-
-- Content
-- Author
-- Timestamp
-
----
-
-# Dashboard
-
-The dashboard provides:
-
-- Total Leads
-- New Leads
-- Contacted Leads
-- Qualified Leads
-- Won Leads
-- Lost Leads
-
-Additional features:
-
-- Recent Activity
-- Lead Statistics
+- Lead summary cards
+- Recent activity
+- Lead list
 - Search
-- Filters
+- Status filters
 - Pagination
+- Lead details
+- Notes
+- Assignment controls for admins
 
----
+## Tech Stack
 
-# Tech Stack
-
-## Frontend
+Frontend:
 
 - React
 - Vite
 - Tailwind CSS
 - React Router
 - Axios
-- React Query
-- React Hook Form
-- React Hot Toast
 - Lucide React
 
----
-
-## Backend
+Backend:
 
 - Node.js
 - Express.js
-- TypeScript
-
----
-
-## Database
-
 - MongoDB
-
----
-
-## Authentication
-
+- Mongoose
 - JWT
-- bcrypt
+- bcryptjs
+- Zod validation
 
----
+Deployment:
 
-## Testing
+- Vercel for the client
+- Render for the server
+- MongoDB database
 
-- Jest
-- Supertest
+## Project Structure
 
----
-
-# Project Structure
-
+```text
+digital-heros
+|-- client
+|   |-- src
+|   |-- public
+|   |-- package.json
+|   `-- vite.config.js
+|
+|-- server
+|   |-- src
+|   |   |-- config
+|   |   |-- controllers
+|   |   |-- middleware
+|   |   |-- models
+|   |   |-- routes
+|   |   |-- services
+|   |   |-- utils
+|   |   `-- validations
+|   `-- package.json
+|
+|-- screenshort
+|-- package.json
+`-- README.md
 ```
-project
-│
-├── frontend
-│   ├── src
-│   ├── components
-│   ├── pages
-│   ├── routes
-│   ├── services
-│   └── context
-│
-├── backend
-│   ├── src
-│   ├── controllers
-│   ├── routes
-│   ├── middleware
-│   ├── prisma
-│   ├── tests
-│   └── utils
-│
-└── README.md
-```
 
----
+## Getting Started
 
-# Database Design
-
-Main entities
-
-## User
-
-- id
-- name
-- email
-- password
-- role
-
----
-
-## Lead
-
-- id
-- name
-- email
-- phone
-- company
-- status
-- assignedTo
-- createdAt
-- updatedAt
-
----
-
-## Note
-
-- id
-- content
-- leadId
-- authorId
-- createdAt
-
----
-
-## Activity
-
-- id
-- action
-- leadId
-- userId
-- createdAt
-
----
-
-# Installation
-
-## Clone Repository
+### 1. Clone The Repo
 
 ```bash
 git clone https://github.com/Shivam000189/digital-h
-
-cd ..
+cd digital-h
 ```
 
----
+### 2. Install Dependencies
 
-## Backend Setup
+Install everything from the root:
+
+```bash
+npm run install:all
+```
+
+Or install each app separately:
 
 ```bash
 cd server
+npm install
 
+cd ../client
 npm install
 ```
 
-Create
+### 3. Configure The Server
 
-```
-.env
-```
-
-Example
+Create `server/.env`:
 
 ```env
-DATABASE_URL=
-
-JWT_SECRET=
-
-PORT=
-
-MONGO_URI
+PORT=3000
+MONGO_URI=mongodb://127.0.0.1:27017/dg-heros
+JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:5173
 ```
 
-Start backend
+### 4. Configure The Client
 
-```bash
-npm run dev
-```
-
----
-
-## Frontend Setup
-
-```bash
-cd frontend
-
-npm install
-```
-
-Create
-
-```
-.env
-```
-
-Example
+Create `client/.env`:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:3000/api
 ```
 
-Run
+### 5. Run Locally
+
+Start the backend:
 
 ```bash
-npm run dev
+npm run dev:server
 ```
 
----
+Start the frontend in another terminal:
 
-# API Documentation
-
-Base URL
-
+```bash
+npm run dev:client
 ```
+
+The client runs on Vite, usually at:
+
+```text
+http://localhost:5173
+```
+
+## API Overview
+
+Base URL:
+
+```text
 /api
 ```
 
----
+### Auth
 
-## Authentication
-
-### Login
-
-```
+```text
+POST /auth/register
 POST /auth/login
+GET  /auth/me
+POST /auth/logout
 ```
 
-Request
+Example login body:
 
 ```json
 {
@@ -378,365 +229,120 @@ Request
 }
 ```
 
-Response
+Authenticated requests use:
 
-```json
-{
-  "token": "jwt-token"
-}
+```text
+Authorization: Bearer <token>
 ```
 
-Status Codes
+### Leads
 
-```
-200 OK
-
-401 Unauthorized
-```
-
----
-
-## Get Leads
-
-```
-GET /leads
-```
-
-Supports
-
-- Pagination
-- Search
-- Status Filter
-- Assigned User Filter
-
-Example
-
-```
-GET /leads?page=1&limit=10&status=Qualified
-```
-
-Response
-
-```json
-{
-  "data": [],
-  "page": 1,
-  "totalPages": 3,
-  "totalItems": 24
-}
-```
-
-Status Codes
-
-```
-200 OK
-
-401 Unauthorized
-```
-
----
-
-## Get Lead
-
-```
-GET /leads/:id
-```
-
----
-
-## Create Lead
-
-```
-POST /leads
-```
-
-Admin Only
-
----
-
-## Update Lead
-
-```
-PATCH /leads/:id
-```
-
-Admin / Assigned Member
-
----
-
-## Delete Lead
-
-```
+```text
+POST   /leads
+GET    /leads
+GET    /leads/:id
+PATCH  /leads/:id
+PATCH  /leads/:id/status
+PATCH  /leads/:id/assign
 DELETE /leads/:id
 ```
 
-Admin Only
+Lead list supports:
 
----
-
-## Public Lead Capture
-
-```
-POST /capture
-```
-
-No authentication required.
-
----
-
-## Add Note
-
-```
-POST /leads/:id/notes
-```
-
----
-
-## Assign Lead
-
-```
-PATCH /leads/:id/assign
-```
-
-Admin Only
-
----
-
-# API Response Codes
-
-| Code | Description |
-|-------|-------------|
-|200|Success|
-|201|Created|
-|400|Bad Request|
-|401|Unauthorized|
-|403|Forbidden|
-|404|Not Found|
-|500|Internal Server Error|
-
----
-
-# Authentication & Authorization
-
-The application uses JWT-based authentication.
-
-Protected routes require
-
-```
-Authorization
-
-Bearer <token>
-```
-
-Authorization is validated on both
-
-- Client
-- Server
-
-Unauthorized requests receive
-
-```
-401 Unauthorized
-```
-
-Forbidden actions receive
-
-```
-403 Forbidden
-```
-
----
-
-# Pagination
-
-Supported Query Parameters
-
-```
+```text
 ?page=1
-
 ?limit=10
-```
-
----
-
-# Filtering
-
-```
-?status=New
-
-?status=Qualified
-
+?status=QUALIFIED
 ?assignedTo=userId
-```
-
----
-
-# Search
-
-```
 ?search=john
 ```
 
-Searches
+### Notes
 
-- Name
-- Email
-- Company
-
----
-
-# Testing
-
-Automated tests cover:
-
-- Authentication
-- Protected Routes
-- Permission Enforcement
-- Lead Creation
-- Lead Assignment
-- Lead Status Updates
-
-Run tests
-
-```bash
-cd backend
-
-npm test
+```text
+POST   /leads/:id/notes
+GET    /leads/:id/notes
+DELETE /notes/:id
 ```
 
----
+### Activity
 
-# Deployment
-
-Frontend
-
-- Vercel
-
-Backend
-
-- Render
-
-Database
-
-- Neon PostgreSQL
-
----
-
-# Test Credentials
-
-## Admin
-
-Email
-
-```
-shivam@test.com
+```text
+GET /leads/:id/activities
 ```
 
-Password
+### Dashboard
 
-```
-123456
-```
-
----
-
-## Member
-
-Email
-
-```
-member@example.com
+```text
+GET /dashboard
 ```
 
-Password
+### Health Check
 
+```text
+GET /health
 ```
-123456
+
+## Response Codes
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad request |
+| 401 | Unauthorized |
+| 403 | Forbidden |
+| 404 | Not found |
+| 500 | Server error |
+
+## Test Credentials
+
+Admin:
+
+```text
+Email: shivam@test.com
+Password: 123456
 ```
 
----
+Member:
 
-# Screenshots
+```text
+Email: member@example.com
+Password: 123456
+```
 
-## Public Form
+## Screenshots
 
-![Public Lead Capture](./screenshots/img5.png)
+### Public Lead Form
 
----
+![Public Lead Capture](./screenshort/img5.png)
 
----
+### Dashboard
 
-## Dashboard
+![Dashboard](./screenshort/img4.png)
 
-[Dashboard Capture](./screenshots/img4.png)
+### Leads
 
----
+![Leads](./screenshort/img2.png)
 
-## Leads
+### Lead Details
 
-![Leads](./screenshots/img2.png)
+![Lead Details](./screenshort/img3.png)
 
----
+## Future Ideas
 
-## Lead Details
-
-![leads](./screenshots/img3.png)
-
----
-
-# Assignment Requirements Checklist
-
-| Requirement | Status |
-|------------|--------|
-|Public Lead Capture Form|✅|
-|Authenticated Dashboard|✅|
-|Admin & Member Roles|✅|
-|Role-Based Permissions|✅|
-|Lead Lifecycle|✅|
-|Lead Assignment|✅|
-|Notes with Timestamps|✅|
-|Activity Trail|✅|
-|REST JSON API|✅|
-|Pagination|✅|
-|Filtering|✅|
-|Proper HTTP Status Codes|✅|
-|API Documentation|✅|
-|Automated Tests|✅|
-|Free-Tier Deployment|✅|
-|Public GitHub Repository|✅|
-
----
-
-# Future Improvements
-
-- Email notifications
-- CSV import/export
-- Advanced analytics dashboard
+- Email notifications for assigned leads
+- CSV import and export
+- Better analytics charts
 - Lead reminders
 - File attachments
-- WebSocket live updates
-- Audit reports
-
----
-
-# License
-
-This project was developed for the **Digital Heroes Full Stack Development Training Task**.
-
----
+- Live updates with WebSockets
+- More detailed audit logs
 
 ## Author
 
-**Shivam Sharma**
+Shivam Sharma
 
 GitHub: https://github.com/Shivam000189/
 
 X: https://x.com/shivam_s0
-
----
-
-### Footer Credit
-
-Built for **Digital Heroes Training Task**
-
-https://digitalheroesco.com
