@@ -22,7 +22,7 @@ connectDB();
 app.use(express.json({ limit: "1mb" }));
 
 const PORT = process.env.PORT || 3000;
-const localOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const localOrigins = ["http://localhost:5173", "http://127.0.0.1:5173", "https://digital-h-mocha.vercel.app/"];
 const allowedOrigins = (process.env.CLIENT_URL || "")
   .split(",")
   .map((origin) => origin.trim())
