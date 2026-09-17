@@ -582,6 +582,11 @@ export function LeadDetails() {
   const [activities, setActivities] = useState([]);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [emailModal, setEmailModal] = useState(false);
+  const [emailForm, setEmailForm] = useState({ subject: "", message: "" });
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState("");
+  const [emailError, setEmailError] = useState("");
   const load = () =>
     Promise.all([
       API.get(`/leads/${id}`),
@@ -618,6 +623,27 @@ export function LeadDetails() {
       setError(errorMessage(err));
     }
   };
+  const sendEmail = async (e) => {
+    e.preventDefault();
+    if (!emailForm.subject.trim() || !emailForm.message.trim()) return;
+    setSendingEmail(true);
+    setEmailError("");
+    try {
+      const res = await API.post(`/leads/${id}/send-email`, emailForm);
+      setEmailSuccess(res.data?.message || "Email sent successfully!");
+      setEmailForm({ subject: "", message: "" });
+      setEmailModal(false);
+      if (res.data?.data) {
+        setActivities((prev) => [res.data.data, ...prev]);
+      } else {
+        load();
+      }
+    } catch (err) {
+      setEmailError(errorMessage(err));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
   if (!lead && !error)
     return (
       <Shell>
@@ -647,6 +673,16 @@ export function LeadDetails() {
           </p>
         </div>
         <div className="head-actions">
+          <button
+            type="button"
+            className="primary email-btn"
+            onClick={() => {
+              setEmailModal(true);
+              setEmailError("");
+            }}
+          >
+            ✉ Send email
+          </button>
           <Link className="secondary" to={`/leads/${id}/edit`}>
             Edit lead
           </Link>
@@ -661,6 +697,8 @@ export function LeadDetails() {
         </div>
       </header>
       {error && <div className="alert error">{error}</div>}
+      {emailSuccess && <div className="alert success">{emailSuccess}</div>}
+      {emailError && <div className="alert error">{emailError}</div>}
       <div className="details-grid">
         <section className="stack">
           <article className="panel info-panel">
@@ -744,8 +782,13 @@ export function LeadDetails() {
             {activities.length ? (
               <div className="timeline">
                 {activities.map((a) => (
-                  <div key={a._id}>
-                    <i></i>
+                  <div
+                    key={a._id}
+                    className={`timeline-item ${a.type === "EMAIL_SENT" ? "email-event" : ""}`}
+                  >
+                    <i className={a.type === "EMAIL_SENT" ? "icon-email" : ""}>
+                      {a.type === "EMAIL_SENT" ? "✉" : ""}
+                    </i>
                     <p>
                       <strong>{a.action}</strong>
                       <span>
@@ -762,6 +805,76 @@ export function LeadDetails() {
           </article>
         </aside>
       </div>
+      {emailModal && (
+        <div
+          className="modal-backdrop"
+          onClick={() => !sendingEmail && setEmailModal(false)}
+        >
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <h2>Send email to {lead.name}</h2>
+                <p className="modal-recipient">
+                  Recipient: <code>{lead.email}</code>
+                </p>
+              </div>
+              <button
+                type="button"
+                className="modal-close"
+                disabled={sendingEmail}
+                onClick={() => setEmailModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            {emailError && <div className="alert error">{emailError}</div>}
+            <form onSubmit={sendEmail} className="form-grid">
+              <label>
+                Subject
+                <input
+                  required
+                  value={emailForm.subject}
+                  onChange={(e) =>
+                    setEmailForm({ ...emailForm, subject: e.target.value })
+                  }
+                  placeholder="e.g. Following up on your inquiry"
+                  disabled={sendingEmail}
+                  autoFocus
+                />
+              </label>
+              <label>
+                Message
+                <textarea
+                  required
+                  rows="6"
+                  value={emailForm.message}
+                  onChange={(e) =>
+                    setEmailForm({ ...emailForm, message: e.target.value })
+                  }
+                  placeholder="Write your email here..."
+                  disabled={sendingEmail}
+                />
+              </label>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={sendingEmail}
+                  onClick={() => setEmailModal(false)}
+                >
+                  Cancel
+                </button>
+                <button className="primary" disabled={sendingEmail}>
+                  {sendingEmail ? "Sending email…" : "Send email →"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }

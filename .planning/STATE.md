@@ -2,9 +2,9 @@
 
 ## Current Position
 - **Active Milestone**: Sales-Lead 2.0 (Email, Analytics & Real-Time)
-- **Status**: Phase 1 completed; ready to plan Phase 2
-- **Active Phase**: Phase 2: Outbound Email Integration & Activity Logging
-- **Last Completed Phase**: Phase 1: Foundations & Core Bug Fixes
+- **Status**: Phase 2 completed; ready to plan Phase 3
+- **Active Phase**: Phase 3: Analytics & Reporting Engine
+- **Last Completed Phase**: Phase 2: Outbound Email Integration & Activity Logging
 
 ---
 
@@ -13,24 +13,22 @@
 | Phase | Description | Status | Plans Completed |
 |---|---|---|---|
 | **Phase 1** | Foundations & Core Bug Fixes | Completed | 1 / 1 |
-| **Phase 2** | Outbound Email Integration & Activity Logging | Ready to Plan | 0 / TBD |
-| **Phase 3** | Analytics & Reporting Engine | Backlog | 0 / TBD |
+| **Phase 2** | Outbound Email Integration & Activity Logging | Completed | 1 / 1 |
+| **Phase 3** | Analytics & Reporting Engine | Ready to Plan | 0 / TBD |
 | **Phase 4** | Real-Time WebSockets Collaboration | Backlog | 0 / TBD |
 
 ---
 
-## Key Decisions & Completed Items in Phase 1
+## Key Decisions & Completed Items in Phase 2
 
-1. **Credentials Sanitized**: Removed plaintext production MongoDB Atlas credentials and secrets from `DEPLOYMENT.md`.
-2. **Auth Bug Fixed**: Corrected `req.userId` to `req.user.id` in `authController.js` and removed nonexistent `googleId`.
-3. **Session Interceptor Fixed**: Modified Axios interceptor in `axios.js` so only 401 Unauthorized wipes storage and redirects. 403 Forbidden rejects cleanly without terminating user session.
-4. **Pipeline Completed**: Added `PROPOSAL_SENT` status to `dashboardService.js` aggregation and rendered a `Proposal sent` stat card on the CRM dashboard.
-5. **Activity Schema Enhanced**: Added structured `type` enum (`STATUS_CHANGE`, `NOTE_ADDED`, `EMAIL_SENT`, `ASSIGNED`, `LEAD_CREATED`, `LEAD_DELETED`) to `Activity.js`, while preserving backwards compatibility.
-6. **Team Members API Added**: Created `GET /api/users` endpoint via `userController.js` and `userRoutes.js` mounted at `/api/users`.
-7. **Validation Aligned**: Split `updateLeadSchema` and `updateStatusSchema` in `leadValidation.js` and applied to respective PATCH routes in `leadRoutes.js`.
-8. **Lead Deletion Audit**: Attributed lead deletion activities with `req.user.id`.
+1. **Nodemailer Transport**: Installed `nodemailer` and configured `emailService.js` with SMTP connection pooling and development fallback mocking.
+2. **Branded HTML Template**: Built `buildLeadEmailHtml` in `emailTemplates.js` providing clean HTML email layout, personalized salutation, body paragraphs, signature, and footer.
+3. **Zod Validation**: Defined `sendEmailSchema` in `emailValidation.js` enforcing subject (1-150 chars) and message (1-5000 chars).
+4. **Email Controller & RBAC**: Implemented `POST /api/leads/:id/send-email` in `emailController.js` requiring authentication and enforcing lead ownership (Admin can email any lead; Member can only email leads assigned to them).
+5. **Activity Logging**: Automatically logs an `Activity` with `type: "EMAIL_SENT"` upon successful delivery, populating the actor before returning.
+6. **Compose Modal & Timeline**: Added "Send email" button, modal dialog with live loading state, error/success toasts, immediate timeline prepend without refresh, and distinct `✉` email indicators in `CrmPages.jsx` and `App.css`.
 
 ---
 
 ## Next Action
-Plan Phase 2 via `/gsd-plan-phase 2` (Outbound Email Integration & Activity Logging).
+Plan Phase 3 via `/gsd-plan-phase 3` (Analytics & Reporting Engine).

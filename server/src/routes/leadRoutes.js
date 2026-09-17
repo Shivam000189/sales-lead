@@ -13,12 +13,16 @@ const {
   remove,
 } = require("../controllers/leadController");
 
+const { sendLeadEmail } = require("../controllers/emailController");
+
 const {
   createLeadSchema,
   updateLeadSchema,
   updateStatusSchema,
   assignLeadSchema,
 } = require("../validations/leadValidation");
+
+const { sendEmailSchema } = require("../validations/emailValidation");
 
 const { authenticate } = require("../middleware/authMiddleware");
 const authorize = require("../middleware/authorize");
@@ -67,6 +71,14 @@ router.patch(
   authenticate,
   validate(updateStatusSchema),
   updateStatus
+);
+
+// Send Email to Lead
+router.post(
+  "/:id/send-email",
+  authenticate,
+  validate(sendEmailSchema),
+  sendLeadEmail
 );
 
 // Delete Lead (Admin Only)
