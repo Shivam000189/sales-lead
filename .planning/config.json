@@ -1,0 +1,11 @@
+{
+  "mode": "standard",
+  "depth": "comprehensive",
+  "planning": {
+    "commit_per_phase": true,
+    "verify_each_step": true
+  },
+  "branching": {
+    "enabled": false
+  }
+}
