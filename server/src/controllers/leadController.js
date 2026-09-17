@@ -244,7 +244,7 @@ const remove = async(req,res)=>{
 
   try{
 
-    const lead = await deleteLead(req.params.id);
+    const lead = await deleteLead(req.params.id, req.user?.id);
 
 
     if(!lead){

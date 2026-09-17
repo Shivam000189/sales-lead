@@ -19,6 +19,19 @@ const activitySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    type: {
+      type: String,
+      enum: [
+        "STATUS_CHANGE",
+        "NOTE_ADDED",
+        "EMAIL_SENT",
+        "ASSIGNED",
+        "LEAD_CREATED",
+        "LEAD_DELETED",
+      ],
+      default: "STATUS_CHANGE",
+    },
   },
   {
     timestamps: true,

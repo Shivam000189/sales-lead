@@ -20,7 +20,8 @@ const createNote = async (
   await createActivity(
     leadId,
     "Note Added",
-    userId
+    userId,
+    "NOTE_ADDED"
   );
 
 

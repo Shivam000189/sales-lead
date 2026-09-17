@@ -4,13 +4,15 @@ const Activity = require("../models/Activity");
 const createActivity = async (
   leadId,
   action,
-  userId
+  userId,
+  type = "STATUS_CHANGE"
 ) => {
 
   return await Activity.create({
     leadId,
     action,
     performedBy: userId,
+    type,
   });
 
 };

@@ -2,20 +2,30 @@ const Lead = require("../models/Lead");
 const User = require("../models/User");
 const Activity = require("../models/Activity");
 
-
 const getDashboardStats = async () => {
-
-  const [totalLeads, newLeads, contactedLeads, qualifiedLeads, wonLeads, lostLeads, recentActivities] = await Promise.all([
+  const [
+    totalLeads,
+    newLeads,
+    contactedLeads,
+    qualifiedLeads,
+    proposalSentLeads,
+    wonLeads,
+    lostLeads,
+    recentActivities,
+  ] = await Promise.all([
     Lead.countDocuments(),
     Lead.countDocuments({ status: "NEW" }),
     Lead.countDocuments({ status: "CONTACTED" }),
     Lead.countDocuments({ status: "QUALIFIED" }),
+    Lead.countDocuments({ status: "PROPOSAL_SENT" }),
     Lead.countDocuments({ status: "WON" }),
     Lead.countDocuments({ status: "LOST" }),
-    Activity.find().populate("performedBy", "name").populate("leadId", "name").sort({ createdAt: -1 }).limit(6),
+    Activity.find()
+      .populate("performedBy", "name")
+      .populate("leadId", "name")
+      .sort({ createdAt: -1 })
+      .limit(6),
   ]);
-
-
 
   // Leads assigned per user
   const assignedLeads = await Lead.aggregate([
@@ -55,9 +65,6 @@ const getDashboardStats = async () => {
     },
   ]);
 
-
-
-
   // Monthly lead creation
   const monthlyLeads = await Lead.aggregate([
     {
@@ -91,22 +98,19 @@ const getDashboardStats = async () => {
     },
   ]);
 
-
-
   return {
     totalLeads,
     new: newLeads,
     contacted: contactedLeads,
     qualified: qualifiedLeads,
+    proposalSent: proposalSentLeads,
     won: wonLeads,
     lost: lostLeads,
     recentActivities,
     assignedLeads,
     monthlyLeads,
   };
-
 };
-
 
 module.exports = {
   getDashboardStats,

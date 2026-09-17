@@ -180,6 +180,7 @@ export function Dashboard() {
     ["New", "new", "✦", "blue"],
     ["Contacted", "contacted", "◌", "amber"],
     ["Qualified", "qualified", "✓", "violet"],
+    ["Proposal sent", "proposalSent", "✉", "cyan"],
     ["Won", "won", "↗", "green"],
     ["Lost", "lost", "×", "rose"],
   ];

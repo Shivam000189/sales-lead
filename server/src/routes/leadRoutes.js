@@ -3,7 +3,6 @@ const express = require("express");
 const router = express.Router();
 const validate = require("../middleware/validate");
 
-
 const {
   create,
   getAll,
@@ -16,28 +15,20 @@ const {
 
 const {
   createLeadSchema,
+  updateLeadSchema,
   updateStatusSchema,
   assignLeadSchema,
 } = require("../validations/leadValidation");
 
-
-const {
-  authenticate,
-} = require("../middleware/authMiddleware");
-
-
+const { authenticate } = require("../middleware/authMiddleware");
 const authorize = require("../middleware/authorize");
 
-
-
-// Create Lead
+// Create Lead (Public visitor or authenticated user)
 router.post(
   "/",
-  // A visitor can submit a lead from the public capture page.
   validate(createLeadSchema),
   create
 );
-
 
 // View All Leads
 router.get(
@@ -46,7 +37,6 @@ router.get(
   getAll
 );
 
-
 // View Single Lead
 router.get(
   "/:id",
@@ -54,15 +44,15 @@ router.get(
   getOne
 );
 
-
-// Update Lead
+// Update Lead details
 router.patch(
   "/:id",
   authenticate,
-  validate(updateStatusSchema),
+  validate(updateLeadSchema),
   update
 );
 
+// Assign Lead (Admin Only)
 router.patch(
   "/:id/assign",
   authenticate,
@@ -71,12 +61,13 @@ router.patch(
   assign
 );
 
+// Update Lead Status
 router.patch(
   "/:id/status",
   authenticate,
+  validate(updateStatusSchema),
   updateStatus
 );
-
 
 // Delete Lead (Admin Only)
 router.delete(
@@ -85,7 +76,5 @@ router.delete(
   authorize("admin"),
   remove
 );
-
-
 
 module.exports = router;

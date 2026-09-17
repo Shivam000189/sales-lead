@@ -1,6 +1,5 @@
 const { z } = require("zod");
 
-
 const leadStatus = [
   "NEW",
   "CONTACTED",
@@ -10,72 +9,41 @@ const leadStatus = [
   "LOST",
 ];
 
-
 const createLeadSchema = z.object({
-
-  name:z
-    .string()
-    .min(2,"Name is required"),
-
-
-  email:z
-    .string()
-    .email("Invalid email"),
-
-
-  phone:z
-    .string()
-    .regex(
-      /^[0-9]{10}$/,
-      "Phone must contain 10 digits"
-    ),
-
-
-  company:z
-    .string()
-    .optional(),
-
-
-  message:z
-    .string()
-    .optional(),
-
-
-  status:z
-    .enum(leadStatus)
-    .optional(),
-
-
-  assignedTo:z
-    .string()
-    .optional(),
-
-});
-
-
-
-const updateStatusSchema = z.object({
-  name: z.string().min(2, "Name is required").optional(),
-  email: z.string().email("Invalid email").optional(),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone must contain 10 digits").optional(),
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone must contain 10 digits"),
   company: z.string().optional(),
   message: z.string().optional(),
   status: z.enum(leadStatus).optional(),
-}).refine((data) => Object.keys(data).length > 0, "At least one field is required");
-
-
-
-const assignLeadSchema = z.object({
-
-  assignedTo:z
-    .string()
-    .min(1,"User ID required"),
-
+  assignedTo: z.string().optional(),
 });
 
+const updateLeadSchema = z
+  .object({
+    name: z.string().min(2, "Name is required").optional(),
+    email: z.string().email("Invalid email").optional(),
+    phone: z.string().regex(/^[0-9]{10}$/, "Phone must contain 10 digits").optional(),
+    company: z.string().optional(),
+    message: z.string().optional(),
+    status: z.enum(leadStatus).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, "At least one field is required");
+
+const updateStatusSchema = z.object({
+  status: z.enum(leadStatus, {
+    errorMap: () => ({ message: "Invalid lead status" }),
+  }),
+});
+
+const assignLeadSchema = z.object({
+  assignedTo: z.string().min(1, "User ID required"),
+});
 
 module.exports = {
+  leadStatus,
   createLeadSchema,
+  updateLeadSchema,
   updateStatusSchema,
   assignLeadSchema,
 };

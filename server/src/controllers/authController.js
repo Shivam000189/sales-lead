@@ -77,7 +77,7 @@ const login = async (req, res) => {
 // Get Current User
 const me = async (req, res) => {
   try {
-    const user = await getMe(req.userId);
+    const user = await getMe(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -92,7 +92,6 @@ const me = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        googleId: user.googleId,
         role: user.role,
         createdAt: user.createdAt,
       },

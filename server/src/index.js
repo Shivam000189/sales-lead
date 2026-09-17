@@ -9,6 +9,7 @@ const leadRoutes = require("./routes/leadRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const userRoutes = require("./routes/userRoutes");
 const cors = require("cors");
 
 
@@ -53,6 +54,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api", noteRoutes);
 app.use("/api", activityRoutes);
 app.use("/api", dashboardRoutes);
