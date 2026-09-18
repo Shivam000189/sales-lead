@@ -13,6 +13,11 @@ const activityRoutes = require("./routes/activityRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const userRoutes = require("./routes/userRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const workflowRoutes = require("./routes/workflowRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+const scheduledActivityRoutes = require("./routes/scheduledActivityRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const { startInboundEmailJob } = require("./jobs/inboundEmailJob");
 const cors = require("cors");
 
 
@@ -62,6 +67,10 @@ app.use("/api", noteRoutes);
 app.use("/api", activityRoutes);
 app.use("/api", dashboardRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/workflows", workflowRoutes);
+app.use("/api/contacts", contactRoutes);
+app.use("/api/scheduled-activities", scheduledActivityRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use("/api", (_req, res) => {
   res.status(404).json({
@@ -99,4 +108,5 @@ initSocket(server, { allowedOrigins, localOrigins });
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  startInboundEmailJob();
 });

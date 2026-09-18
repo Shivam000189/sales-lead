@@ -43,16 +43,41 @@ const getNotesByLead = async (leadId) => {
 };
 
 
-// Delete Note
-const deleteNote = async (noteId) => {
+// Create Contact Note
+const createContactNote = async (
+  contactId,
+  userId,
+  text
+) => {
+  const note = await Note.create({
+    contactId,
+    userId,
+    text,
+  });
 
-  return await Note.findByIdAndDelete(noteId);
-
+  return note;
 };
 
+// Get Contact Notes
+const getNotesByContact = async (contactId) => {
+  return await Note.find({
+    contactId,
+  })
+    .populate("userId", "name email role")
+    .sort({
+      createdAt: -1,
+    });
+};
+
+// Delete Note
+const deleteNote = async (noteId) => {
+  return await Note.findByIdAndDelete(noteId);
+};
 
 module.exports = {
   createNote,
+  createContactNote,
   getNotesByLead,
+  getNotesByContact,
   deleteNote,
 };

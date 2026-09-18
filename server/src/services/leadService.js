@@ -1,5 +1,7 @@
 const Lead = require("../models/Lead");
 const { createActivity } = require("./activityService");
+const { runWorkflowsForStatusChange } = require("./workflowService");
+const { autoConvertLeadToContact } = require("./contactService");
 
 // Create Lead
 const createLead = async (data, userId) => {
@@ -124,6 +126,16 @@ const updateLeadStatus = async (leadId, status, userId) => {
       userId,
       "STATUS_CHANGE"
     );
+
+    // Auto-convert lead into a customer Contact when reaching WON
+    if (status === "WON") {
+      await autoConvertLeadToContact(lead, userId);
+    }
+
+    // Trigger rule-based automation workflows asynchronously (non-blocking)
+    runWorkflowsForStatusChange(lead, status, userId).catch((err) => {
+      console.error("[LeadService] Error running workflows on status change:", err.message);
+    });
   }
 
   return lead;

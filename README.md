@@ -1,144 +1,211 @@
-# HeroCRM (Sales-Lead)
+# HeroCRM (Sales-Lead 2.0)
 
-A full-stack, enterprise-grade CRM and lead management platform designed to streamline lead acquisition, pipeline tracking, outbound customer engagement, team collaboration, and real-time performance analytics.
+[![Vite](https://img.shields.io/badge/Vite-8.1.5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19.2.7-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Express-5.2.1-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose%209-47A248?logo=mongodb&logoColor=white)](https://mongoosejs.com/)
+[![Socket.io](https://img.shields.io/badge/Socket.io-4.8.1-010101?logo=socket.io&logoColor=white)](https://socket.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+An enterprise-grade, real-time CRM and sales lifecycle platform. HeroCRM streamlines lead acquisition, interactive Kanban pipeline management, outbound & inbound email synchronization, rule-based workflow automation, converted customer tracking, and forward-looking calendar scheduling.
 
 ---
 
-## Live Application
+## Live Deployments
 
 - **Frontend Application**: [https://digital-h-mocha.vercel.app/](https://digital-h-mocha.vercel.app/)
-- **Backend API**: [https://heros-4vm4.onrender.com/](https://heros-4vm4.onrender.com/)
+- **Backend REST & WebSocket API**: [https://heros-4vm4.onrender.com/](https://heros-4vm4.onrender.com/)
 
 ---
 
-## Overview & Architecture
+## Core Capabilities & Feature Overview
 
-HeroCRM connects public customer acquisition directly into an internal, role-protected sales workspace:
-
-1. **Public Lead Capture**: Responsive web form where prospects submit their contact details and inquiries without requiring authentication.
-2. **Private CRM Workspace**: Authenticated dashboard tailored for Admins and Team Members to manage leads, communicate via email, assign team ownership, log notes, and inspect activity timelines.
-3. **Analytics & Reporting Engine**: MongoDB aggregation-backed visual dashboard powered by Recharts, delivering stage conversion funnels, volume trends over time, and individual sales rep performance metrics.
-
----
-
-## Features
-
-### 1. Lead Acquisition & Pipeline Management
-- **Public Capture Form**: Clean, high-conversion landing page with real-time validation.
+### 1. Lead Acquisition & Pipeline Tracking
+- **Public Lead Capture Form**: Clean, high-converting public landing page with real-time field validation for prospective customer submissions.
 - **6-Stage Pipeline Lifecycle**:
   ```text
   NEW ➔ CONTACTED ➔ QUALIFIED ➔ PROPOSAL_SENT ➔ WON / LOST
   ```
-- **Live Search & Filtering**: Multi-condition search across lead names, emails, phone numbers, and companies. Filter by status or assigned team member with server-side pagination.
-- **Assignment & Ownership**: Admins can reassign leads across team members with automated activity tracking.
+- **Live Search & Filtering**: Multi-condition search across lead names, emails, phone numbers, and companies. Server-side pagination, status filters, and assignee filtering.
+- **Assignment & Ownership**: Granular assignment of leads to team members with live toast alerts to newly assigned reps.
 
-### 2. Outbound Email Integration & Activity Logging
-- **In-App Email Composer**: Compose and dispatch branded HTML emails directly from the Lead Detail view.
-- **Branded Templates**: Responsive HTML email layout with customized signatures and CRM branding.
-- **Development Fallback**: Safe mock mode in development when external SMTP credentials are not configured.
-- **Audit & Activity Timeline**: Every lead status change, note creation, assignment, and outbound email is logged with timestamps, actor IDs, and dedicated visual markers (e.g. `EMAIL_SENT`, `STATUS_CHANGE`).
+### 2. Interactive Drag-and-Drop Kanban Board (`@dnd-kit`)
+- **Visual Pipeline**: 6 dedicated droppable columns with status badges, stage color accents, and lead count indicators.
+- **Optimistic Drag-and-Drop**: Immediate UI movement with automatic rollback on network failure.
+- **Role-Based Drag Authorization**:
+  - `admin`: Can drag and re-stage any lead across all columns.
+  - `member`: Can only drag leads assigned to their user ID (unassigned or other members' leads are locked).
+- **Real-Time Kanban Sync**: Subscribes to WebSocket events; card movements by other reps reflect live without page reloads.
+- **Persistent View Switcher**: Toggle seamlessly between traditional Table List and Kanban Board with preference remembered in `localStorage`.
 
-### 3. Analytics & Reporting Engine
-- **KPI Summary Cards**: Real-time cards displaying Overall Conversion Rate (%), Active Pipeline, Won Deals, and Lost Deals.
-- **Pipeline Funnel Chart**: Horizontal Recharts bar chart depicting volume distribution across each sales stage with drop-off percentages.
-- **Lead Volume Over Time**: Dual-area chart tracking lead generation and closed deals over weekly or monthly intervals, complete with custom date range pickers.
-- **Team Performance Table**: Sortable breakdown of leads assigned, in-progress, won, lost, and conversion rate progress bars per team member.
+### 3. Outbound Email & Inbound IMAP Email Sync
+- **In-App Outbound Email Composer**: Dispatch branded HTML emails directly from Lead Detail.
+- **Inbound Email Sync Engine (`imapflow` + `mailparser`)**:
+  - Automatically polls an external IMAP mailbox over TLS (e.g. Gmail with App Password, Outlook, Mailtrap).
+  - Stream-parses incoming RFC 822 MIME messages to extract sender, subject, date, and clean text snippets.
+  - Matches sender address to existing leads (`Lead.findOne({ email: fromAddress })`).
+  - Automatically logs `EMAIL_RECEIVED` activities on the lead's timeline and broadcasts live updates.
+  - Unmatched senders are safely ignored without creating rogue leads or orphan records.
+- **Automated & Manual Sync**:
+  - Background polling runs every 5 minutes via `node-cron`.
+  - Manual on-demand sync endpoint (`POST /api/admin/sync-inbox`) for instant administrator triggers.
+- **Persistent Sync State (`SyncState.js`)**: Tracks `lastCheckedAt` and UID high-water mark in MongoDB to survive server restarts.
 
-### 4. Authentication & Role-Based Access Control (RBAC)
-- **JWT & Password Hashing**: Secure stateless authentication using JSON Web Tokens and bcryptjs.
-- **Admin Role**:
-  - Full access to all leads, notes, and activity histories.
-  - Ability to create, edit, reassign, and delete leads.
-  - Exclusive access to team member listings (`/api/users`) and performance analytics (`/analytics` & `/api/analytics/by-member`).
-  - Authority to send emails to any lead.
-- **Member Role**:
-  - Access to assigned leads and shared dashboards.
-  - Ability to update status, add notes, and compose outbound emails to assigned leads.
-  - Protected from performing lead deletions, reassignments, or viewing sensitive rep-level analytics.
+### 4. Rule-Based Workflow Automation on Status Transitions
+- **Event-Driven Execution**: Automatically triggers actions when a lead transitions to specific pipeline stages.
+- **Branded Email Catalog**: Pre-built, customizable email templates for each pipeline stage:
+  - `WON` ➔ `won_welcome`: Welcome package and customer onboarding kickoff.
+  - `PROPOSAL_SENT` ➔ `proposal_followup`: Proposal check-in and review schedule link.
+  - `QUALIFIED` ➔ `qualified_intro`: Next steps and discovery agenda.
+  - `CONTACTED` ➔ `contact_touchpoint`: Meeting recap touchpoint.
+  - `NEW` ➔ `lead_acknowledgment`: Immediate inquiry receipt confirmation.
+  - `LOST` ➔ `lost_nurture`: Nurture message with future updates opt-in.
+- **Anti-Spam Deduplication Guard**: Enforces a 1-hour anti-spam cooldown per lead to prevent duplicate emails when toggling statuses.
+- **Admin Management Console (`/workflows`)**: Full CRUD interface to configure trigger statuses, templates, and active/inactive switches.
+
+### 5. Converted Customer Contacts Directory
+- **Automatic Deal Conversion**: Transitioning a lead to `WON` automatically creates a persistent `Contact` record with full profile information (idempotent, prevents duplicates).
+- **Customer Directory (`/contacts`)**: Searchable, paginated directory table showing customer name, company, email, phone, account manager, and backlink to the original lead (`/leads/:id`).
+- **Customer Details View (`/contacts/:id`)**: Displays customer profile, shared account notes, and scheduled activities.
+- **Generalized Notes System**: `Note.js` supports both `leadId` and `contactId`, allowing collaborative notes across the entire lead and customer lifecycle.
+
+### 6. Interactive Month-Grid Calendar & Activity Scheduling
+- **Forward-Looking Commitments (`ScheduledActivity.js`)**: Explicitly differentiates future commitments (calls & meetings) from historical audit logs.
+- **Interactive Calendar View (`/calendar`)**: Custom, responsive month grid with previous/next navigation and "Today" shortcut.
+- **Color-Coded Activity Chips**:
+  - 📞 **Calls**: Blue chip (`chip-call`)
+  - 👥 **Meetings**: Purple chip (`chip-meeting`)
+  - ✓ **Completed**: Strikethrough, muted styling
+- **Date Click Scheduling**: Click any day cell to open a quick schedule modal with the date pre-filled.
+- **Chip Click Management**: Click any activity chip to view details, linked lead/customer, mark complete/incomplete, or delete.
+- **Upcoming Activities Widget**: Embedded in both `LeadDetails` and `ContactDetails` with quick completion toggles.
+
+### 7. Real-Time WebSockets Collaboration (`Socket.io`)
+- **JWT Socket Handshake**: Authenticated connection verifying tokens directly during the WebSocket handshake.
+- **Room Subscriptions**: Dedicated user notification rooms (`user:{userId}`) and lead rooms (`lead:{leadId}`).
+- **Live Sync Without Refresh**:
+  - Instant status badge updates and live timeline prepending.
+  - In-place row updates on active table and Kanban boards.
+  - Floating toast notifications for newly assigned leads.
+  - Real-time connection health indicator in sidebar.
+
+### 8. Analytics & Reporting Engine
+- **Aggregation-Backed**: High-performance MongoDB aggregation pipelines with zero in-memory JavaScript loops.
+- **Visual Dashboards (`Recharts`)**:
+  - **KPI Cards**: Overall Conversion Rate (%), Active Pipeline Volume, Won Deals, and Lost Deals.
+  - **Stage Funnel**: Horizontal bar chart showing volume distribution and conversion drop-offs.
+  - **Volume Trends**: Dual-area chart tracking lead creation and won deals over selectable timeframes (`week` / `month`).
+  - **Team Performance Table**: Sortable breakdown of leads assigned, won, lost, and conversion rates per sales rep.
 
 ---
 
-## Tech Stack
+## Technology Stack
 
-### Frontend
-- **Framework**: React 19 + Vite
-- **Data Visualization**: Recharts (v3)
-- **Styling**: Tailwind CSS + Custom Design System (`App.css`)
-- **Routing**: React Router v7 (with `RequireAuth` role gates)
-- **HTTP Client**: Axios (with response interceptors for 401/403 handling)
+### Frontend Subsystem (`client/`)
+| Category | Technology |
+|---|---|
+| **Framework** | React 19 (`19.2.7`) + Vite 8 (`8.1.5`) |
+| **Routing** | React Router v7 (`7.18.1`) with `<RequireAuth>` guards |
+| **Real-Time Client** | Socket.io-client (`4.8.3`) with `<SocketProvider>` |
+| **Drag & Drop** | `@dnd-kit/core` + `@dnd-kit/sortable` (`6.3.1`) |
+| **Visualizations** | Recharts (`3.10.1`) |
+| **Styling** | Tailwind CSS v4 + Handcrafted Design System (`App.css`) |
+| **HTTP Client** | Axios (`1.18.1`) with JWT bearer injection and 401/403 interceptors |
 
-### Backend
-- **Runtime**: Node.js & Express.js (CommonJS)
-- **Database**: MongoDB with Mongoose ODM
-- **Indexing**: Optimized schema indexes on `Lead` (`status`, `createdAt`, `assignedTo`) and `Activity` (`createdAt`)
-- **Validation**: Zod (body validation & query string validation)
-- **Email Delivery**: Nodemailer (SMTP transport with dev fallback)
-- **Security**: CORS origin allowlisting, bcryptjs password hashing, JWT bearer tokens
+### Backend Subsystem (`server/`)
+| Category | Technology |
+|---|---|
+| **Runtime & Framework** | Node.js + Express 5 (`5.2.1`) |
+| **Database & ODM** | MongoDB with Mongoose (`9.8.0`) |
+| **Real-Time Server** | Socket.io (`4.8.1`) attached to Node HTTP server |
+| **Inbound Email** | `imapflow` (`1.0.171`) + `mailparser` (`3.7.2`) |
+| **Outbound Email** | `nodemailer` (`6.10.1`) with development preview mock |
+| **Job Scheduler** | `node-cron` (`3.0.3`) for 5-minute background inbox checks |
+| **Validation** | Zod (`4.4.3`) on all request bodies and query parameters |
+| **Security & Auth** | JSON Web Tokens (`jsonwebtoken`), `bcryptjs`, and strict CORS allowlisting |
 
 ---
 
-## Project Structure
+## Directory Structure
 
 ```text
 HeroC/
-├── client/
+├── client/                          # React 19 Frontend SPA
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── axios.js            # Axios instance & token interceptors
+│   │   │   └── axios.js             # Axios client with interceptors
+│   │   ├── context/
+│   │   │   └── SocketContext.jsx    # Real-time WebSocket context & toast manager
+│   │   ├── lib/
+│   │   │   └── socket.js            # Socket.io client singleton
 │   │   ├── pages/
-│   │   │   ├── Analytics.jsx       # Recharts dashboards & KPI widgets
-│   │   │   ├── CrmPages.jsx        # Dashboard, Leads, LeadDetails, Shell & Modals
-│   │   │   ├── LeadCapture.jsx     # Public lead capture landing page
-│   │   │   └── SignUP.jsx          # Registration view
-│   │   ├── App.jsx                 # Route definitions & RBAC guards
-│   │   ├── App.css                 # CRM theme styles & design tokens
-│   │   └── main.jsx
+│   │   │   ├── Analytics.jsx        # Recharts visual analytics dashboard
+│   │   │   ├── Calendar.jsx         # Custom month-grid activity calendar
+│   │   │   ├── Contacts.jsx         # Customer directory & detail view
+│   │   │   ├── CrmPages.jsx         # Dashboard, Leads, LeadDetails, Shell layout
+│   │   │   ├── KanbanBoard.jsx      # Interactive drag-and-drop Kanban pipeline
+│   │   │   ├── LeadCapture.jsx      # Public landing page with lead form
+│   │   │   ├── SignUP.jsx           # User registration
+│   │   │   └── WorkflowSettings.jsx # Automation rules manager
+│   │   ├── App.css                  # Design system, layout grids, badges, calendar styles
+│   │   ├── App.jsx                  # Application router tree with role gates
+│   │   └── main.jsx                 # Entry mount point
 │   ├── package.json
 │   └── vite.config.js
 │
-├── server/
+├── server/                          # Express 5 REST & Real-Time API
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── db.js               # MongoDB connection
+│   │   │   ├── db.js                # MongoDB connection handler
+│   │   │   └── socket.js            # Socket.io initialization & JWT handshake
 │   │   ├── controllers/
+│   │   │   ├── activityController.js
+│   │   │   ├── adminController.js   # Manual inbox sync trigger
 │   │   │   ├── analyticsController.js
 │   │   │   ├── authController.js
+│   │   │   ├── contactController.js # Converted customer CRUD
+│   │   │   ├── dashboardController.js
 │   │   │   ├── emailController.js
 │   │   │   ├── leadController.js
 │   │   │   ├── noteController.js
-│   │   │   └── userController.js
+│   │   │   ├── scheduledActivityController.js # Calendar calls & meetings
+│   │   │   ├── userController.js
+│   │   │   └── workflowController.js# Workflow rules CRUD
+│   │   ├── jobs/
+│   │   │   └── inboundEmailJob.js   # node-cron scheduled IMAP polling
 │   │   ├── middleware/
-│   │   │   ├── authMiddleware.js   # JWT verification
-│   │   │   ├── authorize.js        # Role-based authorization
-│   │   │   └── validate.js         # Zod body & query validators
+│   │   │   ├── authMiddleware.js    # JWT verification
+│   │   │   ├── authorize.js         # RBAC guard (admin vs member)
+│   │   │   └── validate.js          # Zod schema validation middleware
 │   │   ├── models/
-│   │   │   ├── Activity.js         # Timeline event schema
-│   │   │   ├── Lead.js             # Lead schema with compound indexes
-│   │   │   ├── Note.js             # Lead notes schema
-│   │   │   └── User.js             # User & role schema
-│   │   ├── routes/
-│   │   │   ├── activityRoutes.js
-│   │   │   ├── analyticsRoutes.js
-│   │   │   ├── authRoutes.js
-│   │   │   ├── dashboardRoutes.js
-│   │   │   ├── leadRoutes.js
-│   │   │   ├── noteRoutes.js
-│   │   │   └── userRoutes.js
+│   │   │   ├── Activity.js          # Audit log (EMAIL_SENT, EMAIL_RECEIVED, etc.)
+│   │   │   ├── Contact.js           # Converted customer profiles
+│   │   │   ├── Lead.js              # Lead documents with indexes
+│   │   │   ├── Note.js              # Multi-entity notes (leads & contacts)
+│   │   │   ├── ScheduledActivity.js # Future calls & meetings
+│   │   │   ├── SyncState.js         # IMAP sync persistence
+│   │   │   ├── User.js              # Accounts & roles
+│   │   │   └── WorkflowRule.js      # Status transition rules
+│   │   ├── routes/                  # Express route definitions
 │   │   ├── services/
-│   │   │   ├── analyticsService.js # MongoDB aggregation pipelines
-│   │   │   ├── emailService.js     # Nodemailer dispatch & dev mock
-│   │   │   └── leadService.js      # Lead filtering & mutations
+│   │   │   ├── analyticsService.js  # MongoDB aggregation pipelines
+│   │   │   ├── contactService.js    # Auto-conversion on WON
+│   │   │   ├── emailService.js      # Outbound Nodemailer
+│   │   │   ├── inboundEmailService.js # Inbound IMAP flow & parsing
+│   │   │   ├── leadService.js       # Core lead operations
+│   │   │   ├── noteService.js
+│   │   │   ├── scheduledActivityService.js
+│   │   │   ├── socketEvents.js      # Socket event emitters
+│   │   │   └── workflowService.js   # Automation runner with 1h anti-spam
 │   │   ├── utils/
-│   │   │   └── emailTemplates.js   # HTML email builder
-│   │   ├── validations/
-│   │   │   ├── analyticsValidation.js
-│   │   │   ├── authValidation.js
-│   │   │   ├── emailValidation.js
-│   │   │   └── leadValidation.js
-│   │   └── index.js                # Express app entry & middleware
+│   │   │   └── emailTemplates.js    # HTML template catalog
+│   │   ├── validations/             # Zod schemas
+│   │   └── index.js                 # Server entry & cron initialization
+│   ├── .env.example
 │   └── package.json
 │
-├── package.json                    # Root monorepo orchestration
+├── .planning/                       # GSD planning, architecture & roadmap
+├── package.json                     # Monorepo orchestration scripts
 └── README.md
 ```
 
@@ -146,67 +213,93 @@ HeroC/
 
 ## API Reference
 
-All endpoints are prefixed with `/api`.
+All backend API routes are prefixed with `/api`.
 
-### Authentication & Users
+### 1. Authentication & Team Management
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Public | Register a new user account |
+| `POST` | `/api/auth/register` | Public | Register new user account |
 | `POST` | `/api/auth/login` | Public | Authenticate user & receive JWT token |
-| `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile |
-| `POST` | `/api/auth/logout` | Authenticated | Invalidate local session |
-| `GET` | `/api/users` | Admin | List all registered users / team members |
+| `GET` | `/api/auth/me` | Authenticated | Fetch current user profile |
+| `POST` | `/api/auth/logout` | Authenticated | Logout & terminate session |
+| `GET` | `/api/users` | Admin | List all registered team members for assignment |
 
-### Leads
+### 2. Leads Management
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/leads` | Public / Auth | Submit or create a new lead |
-| `GET` | `/api/leads` | Authenticated | List leads with pagination, search, & filters |
+| `POST` | `/api/leads` | Public / Auth | Submit public inquiry or create lead |
+| `GET` | `/api/leads` | Authenticated | List leads with pagination, search, status & assignee filters |
 | `GET` | `/api/leads/:id` | Authenticated | Fetch full lead detail by ID |
-| `PATCH`| `/api/leads/:id` | Admin | Update lead contact or company information |
-| `PATCH`| `/api/leads/:id/status` | Authenticated | Update lead status (`NEW`, `CONTACTED`, etc.) |
-| `PATCH`| `/api/leads/:id/assign` | Admin | Assign lead to a team member |
+| `PUT` | `/api/leads/:id` | Authenticated | Update lead contact details |
+| `PATCH`| `/api/leads/:id/status`| Authenticated | Update status (triggers workflows & contact auto-conversion on WON) |
+| `PATCH`| `/api/leads/:id/assign`| Admin | Assign lead to a team member |
 | `DELETE`| `/api/leads/:id` | Admin | Remove a lead from the system |
+| `POST` | `/api/leads/:id/send-email` | Auth (Admin/Owner) | Send branded outbound email to lead |
+| `GET` | `/api/leads/:id/notes` | Authenticated | Get all notes for a lead |
+| `POST` | `/api/leads/:id/notes` | Authenticated | Add a note to a lead |
+| `GET` | `/api/leads/:id/activities` | Authenticated | Retrieve activity history for a lead |
 
-### Outbound Email
+### 3. Customer Contacts
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/leads/:id/send-email` | Auth (Admin / Assigned Member) | Send branded email to lead & log timeline event |
+| `GET` | `/api/contacts` | Authenticated | Searchable, paginated directory of converted customers |
+| `GET` | `/api/contacts/:id` | Authenticated | Fetch contact detail with lead link and notes |
+| `PUT` | `/api/contacts/:id` | Authenticated | Update customer contact profile |
+| `DELETE`| `/api/contacts/:id` | Admin | Remove customer contact |
+| `GET` | `/api/contacts/:id/notes` | Authenticated | Get notes for a contact |
+| `POST` | `/api/contacts/:id/notes` | Authenticated | Add a note to a contact |
 
-### Notes & Activities
+### 4. Scheduled Activities & Calendar
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/leads/:id/notes` | Authenticated | Add an internal note to a lead |
-| `GET` | `/api/leads/:id/notes` | Authenticated | Fetch all notes for a specific lead |
-| `DELETE`| `/api/notes/:id` | Authenticated | Delete a note |
-| `GET` | `/api/leads/:id/activities` | Authenticated | Retrieve timeline history for a lead |
+| `GET` | `/api/scheduled-activities` | Authenticated | Query activities (`?from=&to=&leadId=&contactId=&completed=&type=`) |
+| `POST` | `/api/scheduled-activities` | Authenticated | Schedule a call or meeting for lead/contact |
+| `PUT` | `/api/scheduled-activities/:id` | Authenticated | Reschedule or mark activity completed/incomplete |
+| `DELETE`| `/api/scheduled-activities/:id` | Authenticated | Delete a scheduled activity |
 
-### Analytics & Dashboard
+### 5. Workflow Automation (Admin Only)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `GET` | `/api/dashboard` | Authenticated | Overall lead counts & recent activity feed |
-| `GET` | `/api/analytics/funnel` | Authenticated | Stage distribution & funnel metrics |
-| `GET` | `/api/analytics/conversion-rate` | Authenticated | Conversion rates, won/lost totals & drop-offs |
-| `GET` | `/api/analytics/by-member` | Admin | Individual team member performance breakdown |
-| `GET` | `/api/analytics/timeseries` | Authenticated | Lead creation & win volume trends (`?range=week\|month`) |
+| `GET` | `/api/workflows` | Admin | List all configured workflow rules |
+| `GET` | `/api/workflows/templates` | Admin | List registered email templates |
+| `POST` | `/api/workflows` | Admin | Create an automated trigger rule |
+| `PATCH`| `/api/workflows/:id` | Admin | Update rule or toggle active state |
+| `DELETE`| `/api/workflows/:id` | Admin | Delete an automation rule |
 
-### Real-Time Events (Socket.io WebSockets)
-| Event Name | Direction / Room | Payload Shape | Description |
+### 6. Inbound Email & Admin Operations
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `join-lead` | Client ➔ Server | `leadId: string` | Subscribe client to updates for a specific lead |
-| `leave-lead` | Client ➔ Server | `leadId: string` | Unsubscribe client from lead updates room |
-| `lead:status-changed` | Server ➔ `lead:{leadId}` | `{ leadId, status, lead, activity }` | Status badge and timeline live synchronization |
-| `dashboard:lead-updated` | Server ➔ Broadcast (all) | `{ leadId, status, assignedTo, updatedAt, lead }` | In-place table row updates across all active sessions |
-| `lead:assigned` | Server ➔ `lead:{leadId}` | `{ leadId, assignedTo, lead, activity }` | Updates assignee details in Lead Detail view |
-| `notification:new` | Server ➔ `user:{assignedUserId}` | `{ title, message, leadId, leadName, timestamp }` | Dispatches live floating toast alert to the assigned rep |
-| `lead:note-added` | Server ➔ `lead:{leadId}` | `{ leadId, note }` | Prepends new note to timeline without refresh |
-| `lead:activity-added` | Server ➔ `lead:{leadId}` | `{ leadId, activity }` | Prepends outbound email / audit event to timeline |
+| `POST` | `/api/admin/sync-inbox` | Admin | Manually trigger IMAP inbox sync on demand |
+
+### 7. Analytics & Dashboard
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/dashboard` | Authenticated | Overview statistics and recent activity feed |
+| `GET` | `/api/analytics/funnel` | Authenticated | Pipeline stage distribution & drop-off metrics |
+| `GET` | `/api/analytics/conversion-rate` | Authenticated | Overall conversion rate & won/lost distribution |
+| `GET` | `/api/analytics/by-member` | Admin | Rep-level performance and conversion breakdown |
+| `GET` | `/api/analytics/timeseries` | Authenticated | Lead creation and win trends over time (`week`/`month`) |
 
 ---
 
-## Environment Setup
+## Real-Time Events (Socket.io)
 
-### 1. Server Configuration (`server/.env`)
+| Event Name | Direction / Room | Payload | Description |
+|---|---|---|---|
+| `join-lead` | Client ➔ Server | `leadId: string` | Subscribe client to updates for a specific lead |
+| `leave-lead` | Client ➔ Server | `leadId: string` | Unsubscribe client from lead updates room |
+| `lead:status-changed` | Server ➔ `lead:{leadId}` | `{ leadId, status, lead, activity }` | Synchronizes status badges and adds timeline audit entry |
+| `dashboard:lead-updated` | Server ➔ Broadcast (all) | `{ leadId, status, assignedTo, updatedAt, lead }` | Live in-place row update on Table and Kanban boards |
+| `lead:assigned` | Server ➔ `lead:{leadId}` | `{ leadId, assignedTo, lead, activity }` | Updates assignee information in detail view |
+| `notification:new` | Server ➔ `user:{assignedUserId}` | `{ title, message, leadId, leadName, timestamp }` | Dispatches live floating toast alert to assigned rep |
+| `lead:note-added` | Server ➔ `lead:{leadId}` | `{ leadId, note }` | Prepends new note in real-time |
+| `lead:activity-added` | Server ➔ `lead:{leadId}` | `{ leadId, activity }` | Prepends outbound/inbound email to timeline live |
+
+---
+
+## Environment Variables
+
+### Backend Configuration (`server/.env`)
 ```env
 PORT=3000
 NODE_ENV=development
@@ -214,46 +307,55 @@ MONGO_URI=mongodb://127.0.0.1:27017/dg-heros
 JWT_SECRET=your_super_secret_jwt_key
 CLIENT_URL=http://localhost:5173
 
-# Outbound Email (SMTP) - Optional in dev; operates in Mock mode if omitted
+# Outbound Email (SMTP) - Optional; runs in mock preview mode if omitted
 SMTP_HOST=smtp.mailtrap.io
 SMTP_PORT=2525
-SMTP_USER=your_smtp_user
+SMTP_USER=your_smtp_username
 SMTP_PASS=your_smtp_password
 SMTP_FROM="HeroCRM <no-reply@herocrm.com>"
+
+# Inbound Email (IMAP) - Optional; runs in mock mode if omitted
+# Note: Gmail and Outlook require a 16-character App Password (2FA enabled)
+IMAP_HOST=imap.gmail.com
+IMAP_PORT=993
+IMAP_USER=your_email@example.com
+IMAP_PASS=your_16_character_app_password
+IMAP_TLS=true
+INBOUND_EMAIL_CRON="*/5 * * * *"
 ```
 
-### 2. Client Configuration (`client/.env`)
+### Frontend Configuration (`client/.env`)
 ```env
 VITE_API_URL=http://localhost:3000/api
 ```
 
 ---
 
-## Getting Started Locally
+## Local Development Setup
 
 ### Prerequisites
-- Node.js (v18.x or later recommended)
-- MongoDB instance (local service or MongoDB Atlas URI)
+- Node.js (v18.x or v20.x recommended)
+- MongoDB instance running locally or a MongoDB Atlas connection string
 
-### 1. Clone & Install Dependencies
+### 1. Installation
 ```bash
 git clone https://github.com/Shivam000189/sales-lead.git
 cd sales-lead
 
-# Install monorepo dependencies
+# Install dependencies for both server and client
 npm run install:all
 ```
 
-### 2. Start Backend & Frontend
-In separate terminal windows:
+### 2. Running Locally
+In separate terminal tabs:
 
-**Start the Server:**
+**Start Backend Server:**
 ```bash
 npm run dev:server
-# Server starts at http://localhost:3000
+# API and WebSocket server runs at http://localhost:3000
 ```
 
-**Start the Client:**
+**Start Frontend Client:**
 ```bash
 npm run dev:client
 # Vite client runs at http://localhost:5173
@@ -263,16 +365,16 @@ npm run dev:client
 
 ## Verification & Code Quality
 
-Run linting and production build checks across the application:
+Verify syntax, linting, and build correctness across the monorepo:
 
 ```bash
-# Verify server syntax
-node -c server/src/index.js
+# 1. Verify backend syntax
+node --check server/src/index.js
 
-# Lint the client code
+# 2. Run client ESLint
 npm --prefix client run lint
 
-# Compile client production bundle
+# 3. Compile client production bundle
 npm --prefix client run build
 ```
 
@@ -280,4 +382,4 @@ npm --prefix client run build
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).

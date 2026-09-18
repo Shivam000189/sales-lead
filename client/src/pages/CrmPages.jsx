@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import API from "../api/axios";
 import { useSocket } from "../context/SocketContext";
+import KanbanBoard from "./KanbanBoard";
 
 const STATUSES = [
   "NEW",
@@ -112,10 +113,21 @@ export function Shell({ children }) {
           <Link to="/leads/new">
             ＋ <span>New lead</span>
           </Link>
+          <Link to="/contacts">
+            👥 <span>Contacts</span>
+          </Link>
+          <Link to="/calendar">
+            📅 <span>Calendar</span>
+          </Link>
           {user.role === "admin" && (
-            <Link to="/analytics">
-              ▲ <span>Analytics</span>
-            </Link>
+            <>
+              <Link to="/analytics">
+                ▲ <span>Analytics</span>
+              </Link>
+              <Link to="/workflows">
+                ⚡ <span>Workflows</span>
+              </Link>
+            </>
           )}
         </nav>
         <div className="profile">
@@ -307,6 +319,9 @@ export function Dashboard() {
 export function Leads() {
   const navigate = useNavigate();
   const { socket } = useSocket();
+  const [view, setView] = useState(
+    () => localStorage.getItem("leads_view") || "list"
+  );
   const [result, setResult] = useState({ leads: [], pagination: {} });
   const [query, setQuery] = useState({
     page: 1,
@@ -318,6 +333,11 @@ export function Leads() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const handleViewChange = (newView) => {
+    setView(newView);
+    localStorage.setItem("leads_view", newView);
+  };
 
   useEffect(() => {
     if (!socket) return;
@@ -379,11 +399,34 @@ export function Leads() {
           <h1>Leads</h1>
           <p>Track, prioritize, and nurture every opportunity.</p>
         </div>
-        <Link className="primary" to="/leads/new">
-          + New lead
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="view-toggle-group">
+            <button
+              type="button"
+              className={`view-toggle-btn ${view === "list" ? "active" : ""}`}
+              onClick={() => handleViewChange("list")}
+              title="Table List View"
+            >
+              ☰ List
+            </button>
+            <button
+              type="button"
+              className={`view-toggle-btn ${view === "board" ? "active" : ""}`}
+              onClick={() => handleViewChange("board")}
+              title="Kanban Board View"
+            >
+              ▥ Board
+            </button>
+          </div>
+          <Link className="primary" to="/leads/new">
+            + New lead
+          </Link>
+        </div>
       </header>
-      <section className="panel">
+      {view === "board" ? (
+        <KanbanBoard />
+      ) : (
+        <section className="panel">
         <div className="toolbar">
           <label className="search">
             ⌕
@@ -504,6 +547,7 @@ export function Leads() {
           </div>
         </footer>
       </section>
+      )}
     </Shell>
   );
 }
@@ -660,18 +704,67 @@ export function LeadDetails() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [scheduledActivities, setScheduledActivities] = useState([]);
+  const [scheduleModal, setScheduleModal] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({
+    title: "",
+    type: "CALL",
+    scheduledFor: "",
+    notes: "",
+  });
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
+
   const load = () =>
     Promise.all([
       API.get(`/leads/${id}`),
       API.get(`/leads/${id}/notes`),
       API.get(`/leads/${id}/activities`),
+      API.get("/scheduled-activities", { params: { leadId: id } }),
     ])
-      .then(([a, n, activity]) => {
+      .then(([a, n, activity, sched]) => {
         setLead(a.data.data);
         setNotes(n.data.data || n.data.notes || []);
         setActivities(activity.data.data || activity.data.activities || []);
+        setScheduledActivities(sched.data?.data || []);
       })
       .catch((e) => setError(errorMessage(e)));
+
+  const handleCreateSchedule = async (e) => {
+    e.preventDefault();
+    if (!scheduleForm.title.trim() || !scheduleForm.scheduledFor) {
+      setScheduleError("Title and Date/Time are required.");
+      return;
+    }
+    setScheduling(true);
+    setScheduleError("");
+    try {
+      const res = await API.post("/scheduled-activities", {
+        ...scheduleForm,
+        relatedLead: id,
+      });
+      setScheduledActivities((prev) => [res.data.data, ...prev]);
+      setScheduleModal(false);
+      setScheduleForm({ title: "", type: "CALL", scheduledFor: "", notes: "" });
+    } catch (err) {
+      setScheduleError(errorMessage(err));
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const toggleScheduleCompleted = async (act) => {
+    try {
+      const res = await API.put(`/scheduled-activities/${act._id}`, {
+        completed: !act.completed,
+      });
+      setScheduledActivities((prev) =>
+        prev.map((item) => (item._id === act._id ? res.data.data : item))
+      );
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
   // `load` is deliberately recreated for the current lead id and also used after mutations.
   useEffect(() => {
     load();
@@ -815,6 +908,16 @@ export function LeadDetails() {
         <div className="head-actions">
           <button
             type="button"
+            className="secondary"
+            onClick={() => {
+              setScheduleModal(true);
+              setScheduleError("");
+            }}
+          >
+            📅 Schedule
+          </button>
+          <button
+            type="button"
             className="primary email-btn"
             onClick={() => {
               setEmailModal(true);
@@ -918,23 +1021,94 @@ export function LeadDetails() {
             )}
           </article>
           <article className="panel">
+            <div className="panel-head">
+              <div>
+                <h2>Scheduled Activities</h2>
+                <p>Planned calls and meetings</p>
+              </div>
+              <button
+                type="button"
+                className="ghost small"
+                onClick={() => {
+                  setScheduleModal(true);
+                  setScheduleError("");
+                }}
+              >
+                ＋ Add
+              </button>
+            </div>
+            {scheduledActivities.filter((a) => !a.completed).length ? (
+              <div className="activity-list">
+                {scheduledActivities
+                  .filter((a) => !a.completed)
+                  .map((act) => (
+                    <div key={act._id} className="scheduled-card">
+                      <div className="scheduled-head">
+                        <span className={`activity-badge badge-${act.type.toLowerCase()}`}>
+                          {act.type === "CALL" ? "📞 Call" : "👥 Meeting"}
+                        </span>
+                        <button
+                          type="button"
+                          className="button small secondary"
+                          onClick={() => toggleScheduleCompleted(act)}
+                          title="Mark as completed"
+                        >
+                          ✓ Done
+                        </button>
+                      </div>
+                      <strong>{act.title}</strong>
+                      <div className="scheduled-time">📅 {date(act.scheduledFor)}</div>
+                      {act.notes && <p className="scheduled-note">{act.notes}</p>}
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <Empty>No upcoming activities scheduled.</Empty>
+            )}
+          </article>
+          <article className="panel">
             <h2>Activity timeline</h2>
             {activities.length ? (
               <div className="timeline">
                 {activities.map((a) => (
                   <div
                     key={a._id}
-                    className={`timeline-item ${a.type === "EMAIL_SENT" ? "email-event" : ""}`}
+                    className={`timeline-item ${
+                      a.type === "EMAIL_SENT"
+                        ? "email-event"
+                        : a.type === "EMAIL_RECEIVED"
+                        ? "email-received-event"
+                        : ""
+                    }`}
                   >
-                    <i className={a.type === "EMAIL_SENT" ? "icon-email" : ""}>
-                      {a.type === "EMAIL_SENT" ? "✉" : ""}
+                    <i
+                      className={
+                        a.type === "EMAIL_SENT"
+                          ? "icon-email"
+                          : a.type === "EMAIL_RECEIVED"
+                          ? "icon-email-received"
+                          : ""
+                      }
+                    >
+                      {a.type === "EMAIL_SENT"
+                        ? "✉"
+                        : a.type === "EMAIL_RECEIVED"
+                        ? "📩"
+                        : ""}
                     </i>
                     <p>
                       <strong>{a.action}</strong>
                       <span>
-                        {a.performedBy?.name || "Team member"} ·{" "}
-                        {date(a.createdAt)}
+                        {a.type === "EMAIL_RECEIVED"
+                          ? `From: ${a.metadata?.from || lead.email}`
+                          : a.performedBy?.name || "Team member"}{" "}
+                        · {date(a.createdAt)}
                       </span>
+                      {a.metadata?.snippet && (
+                        <span className="timeline-snippet">
+                          "{a.metadata.snippet}"
+                        </span>
+                      )}
                     </p>
                   </div>
                 ))}
@@ -1009,6 +1183,97 @@ export function LeadDetails() {
                 </button>
                 <button className="primary" disabled={sendingEmail}>
                   {sendingEmail ? "Sending email…" : "Send email →"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {scheduleModal && (
+        <div
+          className="modal-backdrop"
+          onClick={() => !scheduling && setScheduleModal(false)}
+        >
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>Schedule Activity with {lead.name}</h2>
+              <button
+                type="button"
+                className="modal-close"
+                disabled={scheduling}
+                onClick={() => setScheduleModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            {scheduleError && <div className="alert error">{scheduleError}</div>}
+            <form onSubmit={handleCreateSchedule} className="form-grid">
+              <label>
+                Activity Title
+                <input
+                  required
+                  placeholder="e.g. Discovery Call or Demo"
+                  value={scheduleForm.title}
+                  onChange={(e) =>
+                    setScheduleForm({ ...scheduleForm, title: e.target.value })
+                  }
+                  disabled={scheduling}
+                  autoFocus
+                />
+              </label>
+              <div className="form-row">
+                <label>
+                  Type
+                  <select
+                    value={scheduleForm.type}
+                    onChange={(e) =>
+                      setScheduleForm({ ...scheduleForm, type: e.target.value })
+                    }
+                    disabled={scheduling}
+                  >
+                    <option value="CALL">📞 Call</option>
+                    <option value="MEETING">👥 Meeting</option>
+                  </select>
+                </label>
+                <label>
+                  Date & Time
+                  <input
+                    type="datetime-local"
+                    required
+                    value={scheduleForm.scheduledFor}
+                    onChange={(e) =>
+                      setScheduleForm({
+                        ...scheduleForm,
+                        scheduledFor: e.target.value,
+                      })
+                    }
+                    disabled={scheduling}
+                  />
+                </label>
+              </div>
+              <label>
+                Notes (optional)
+                <textarea
+                  rows="3"
+                  placeholder="Call objectives, dial-in link, etc..."
+                  value={scheduleForm.notes}
+                  onChange={(e) =>
+                    setScheduleForm({ ...scheduleForm, notes: e.target.value })
+                  }
+                  disabled={scheduling}
+                />
+              </label>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={scheduling}
+                  onClick={() => setScheduleModal(false)}
+                >
+                  Cancel
+                </button>
+                <button className="primary" disabled={scheduling}>
+                  {scheduling ? "Scheduling…" : "Save Schedule →"}
                 </button>
               </div>
             </form>
