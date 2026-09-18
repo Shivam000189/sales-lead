@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import API from "../api/axios";
 import { useSocket } from "../context/SocketContext";
+import { useTheme } from "../context/ThemeContext";
 import KanbanBoard from "./KanbanBoard";
 
 const STATUSES = [
@@ -58,6 +59,7 @@ export function RequireAuth({ children, adminOnly = false }) {
 export function Shell({ children }) {
   const navigate = useNavigate();
   const { connected, toast, dismissToast } = useSocket();
+  const { isDark, toggleTheme } = useTheme();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const logout = async () => {
     try {
@@ -98,10 +100,21 @@ export function Shell({ children }) {
           <Link to="/dashboard" className="brand">
             <span>H</span> HeroCRM
           </Link>
-          <span
-            className={`socket-status-dot ${connected ? "online" : "offline"}`}
-            title={connected ? "Live sync active" : "Live sync offline"}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
+              aria-label={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
+            >
+              {isDark ? "☀️" : "🌙"}
+            </button>
+            <span
+              className={`socket-status-dot ${connected ? "online" : "offline"}`}
+              title={connected ? "Live sync active" : "Live sync offline"}
+            />
+          </div>
         </div>
         <nav>
           <Link to="/dashboard">

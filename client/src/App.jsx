@@ -8,31 +8,34 @@ import WorkflowSettings from './pages/WorkflowSettings';
 import { Contacts, ContactDetails } from './pages/Contacts';
 import Calendar from './pages/Calendar';
 import { SocketProvider } from './context/SocketContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 
 function App() {
 
   return (
-    <BrowserRouter>
-      <SocketProvider>
-        <Routes>
-          <Route path='/' element={<LeadCapture />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signin" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/leads" element={<RequireAuth><Leads /></RequireAuth>} />
-          <Route path="/leads/new" element={<RequireAuth><LeadForm /></RequireAuth>} />
-          <Route path="/leads/:id/edit" element={<RequireAuth><LeadForm edit /></RequireAuth>} />
-          <Route path="/leads/:id" element={<RequireAuth><LeadDetails /></RequireAuth>} />
-          <Route path="/contacts" element={<RequireAuth><Contacts /></RequireAuth>} />
-          <Route path="/contacts/:id" element={<RequireAuth><ContactDetails /></RequireAuth>} />
-          <Route path="/calendar" element={<RequireAuth><Calendar /></RequireAuth>} />
-          <Route path="/analytics" element={<RequireAuth adminOnly><Analytics /></RequireAuth>} />
-          <Route path="/workflows" element={<RequireAuth adminOnly><WorkflowSettings /></RequireAuth>} />
-        </Routes>
-      </SocketProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <SocketProvider>
+          <Routes>
+            <Route path='/' element={<LeadCapture />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signin" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/leads" element={<RequireAuth><Leads /></RequireAuth>} />
+            <Route path="/leads/new" element={<RequireAuth><LeadForm /></RequireAuth>} />
+            <Route path="/leads/:id/edit" element={<RequireAuth><LeadForm edit /></RequireAuth>} />
+            <Route path="/leads/:id" element={<RequireAuth><LeadDetails /></RequireAuth>} />
+            <Route path="/contacts" element={<RequireAuth><Contacts /></RequireAuth>} />
+            <Route path="/contacts/:id" element={<RequireAuth><ContactDetails /></RequireAuth>} />
+            <Route path="/calendar" element={<RequireAuth><Calendar /></RequireAuth>} />
+            <Route path="/analytics" element={<RequireAuth adminOnly><Analytics /></RequireAuth>} />
+            <Route path="/workflows" element={<RequireAuth adminOnly><WorkflowSettings /></RequireAuth>} />
+          </Routes>
+        </SocketProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

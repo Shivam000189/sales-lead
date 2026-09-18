@@ -97,6 +97,18 @@ An enterprise-grade, real-time CRM and sales lifecycle platform. HeroCRM streaml
   - **Volume Trends**: Dual-area chart tracking lead creation and won deals over selectable timeframes (`week` / `month`).
   - **Team Performance Table**: Sortable breakdown of leads assigned, won, lost, and conversion rates per sales rep.
 
+### 9. Dark Mode & Unified Theming System
+- **Theme Switching**: Seamless toggle between Light and Dark modes available directly in the application header.
+- **Persistence & Anti-FOUC**: Remembers preference across browser reloads via `localStorage` with system preference fallback (`prefers-color-scheme`). Head-injected bootstrap script prevents light flashes on dark theme loads.
+- **Pure CSS Custom Properties**: Zero extra UI dependencies; built directly with native CSS custom properties and Tailwind CSS v4 variables.
+- **Theme-Aware Visualizations**: Real-time chart re-rendering in Recharts with automatic grid, axis, and legend color adaptations.
+
+### 10. Standalone Embeddable Lead Widget
+- **Single-Script Drop-In**: Package public lead capture into a self-contained IIFE bundle (`dist-embed/widget.js`) embeddable on any external website.
+- **True Shadow DOM Isolation**: Renders inside an open Shadow DOM root with encapsulated CSS, guaranteeing complete immunity against external host style overrides.
+- **Configurable API Target**: Script tag dynamically passes `data-api-url` to point to any backend deployment.
+- **Scoped Cross-Origin CORS**: Backend securely accepts public `POST /api/leads` from any external domain while maintaining strict origin whitelist protection on all authenticated CRM routes.
+
 ---
 
 ## Technology Stack
@@ -135,7 +147,12 @@ HeroC/
 │   │   ├── api/
 │   │   │   └── axios.js             # Axios client with interceptors
 │   │   ├── context/
-│   │   │   └── SocketContext.jsx    # Real-time WebSocket context & toast manager
+│   │   │   ├── SocketContext.jsx    # Real-time WebSocket context & toast manager
+│   │   │   └── ThemeContext.jsx     # Dark/light mode theme provider & persistence
+│   │   ├── embed/
+│   │   │   ├── embed.css            # Scoped widget stylesheet for Shadow DOM
+│   │   │   ├── LeadFormShared.jsx   # Shared form validation & phone formatting
+│   │   │   └── widget.jsx           # Standalone Shadow DOM mounting entry
 │   │   ├── lib/
 │   │   │   └── socket.js            # Socket.io client singleton
 │   │   ├── pages/
@@ -147,11 +164,13 @@ HeroC/
 │   │   │   ├── LeadCapture.jsx      # Public landing page with lead form
 │   │   │   ├── SignUP.jsx           # User registration
 │   │   │   └── WorkflowSettings.jsx # Automation rules manager
-│   │   ├── App.css                  # Design system, layout grids, badges, calendar styles
+│   │   ├── App.css                  # Design system, layout grids, dark/light CSS variables
 │   │   ├── App.jsx                  # Application router tree with role gates
 │   │   └── main.jsx                 # Entry mount point
+│   ├── dist-embed/                  # Standalone IIFE widget output (`widget.js`)
 │   ├── package.json
-│   └── vite.config.js
+│   ├── vite.config.js               # Main SPA Vite config
+│   └── vite.config.embed.js         # Dedicated standalone widget Vite config
 │
 ├── server/                          # Express 5 REST & Real-Time API
 │   ├── src/
@@ -363,6 +382,54 @@ npm run dev:client
 
 ---
 
+## Embedding the Lead Form
+
+HeroCRM includes a standalone, embeddable lead capture widget designed for seamless integration into external websites, landing pages, and marketing platforms (WordPress, Webflow, Shopify, static HTML, etc.).
+
+### 1. Embed Snippet
+
+Place the target container element anywhere in your external HTML page and load the widget script:
+
+```html
+<!-- Lead form target container -->
+<div id="hero-crm-lead-form"></div>
+
+<!-- HeroCRM embed script -->
+<script 
+  src="https://digital-h-mocha.vercel.app/widget.js" 
+  data-api-url="https://heros-4vm4.onrender.com/api"
+  defer>
+</script>
+```
+
+### 2. Configuration & Attributes
+
+| Attribute | Required | Default | Description |
+|---|---|---|---|
+| `data-api-url` | Optional | Auto-resolved | The base URL of your HeroCRM API (`http://<server-host>/api`). If omitted, it automatically falls back to the current origin (`/api`). |
+
+### 3. Architecture & Isolation Guarantees
+
+- **Shadow DOM Isolation**: The widget attaches an open Shadow Root (`#shadow-root (open)`) to `#hero-crm-lead-form` and injects its self-contained stylesheet (`embed.css`). External parent CSS resets, frameworks (like Bootstrap, Tailwind, or global typography rules), or `!important` tags cannot disrupt or pollute the form's styling.
+- **Self-Contained Bundle**: Compiled as a standalone IIFE (`dist-embed/widget.js`) with React and ReactDOM bundled inside. No external runtime script dependencies are required on the host page.
+- **Client-Side Validation & Auto-Formatting**: Features real-time required-field checks and automatic 10-digit North American phone formatting `(XXX) XXX-XXXX`.
+- **Scoped Cross-Origin CORS**: The HeroCRM backend safely permits public cross-origin `POST /api/leads` and preflight `OPTIONS` requests from any domain, while enforcing strict origin allowlisting on all authenticated CRM management endpoints.
+
+### 4. Compiling the Standalone Widget
+
+To build the standalone embed script:
+
+```bash
+# From workspace root
+npm run build:embed
+
+# Or from client directory
+npm --prefix client run build:embed
+```
+The compiled output is emitted to `client/dist-embed/widget.js`.
+
+---
+
 ## Verification & Code Quality
 
 Verify syntax, linting, and build correctness across the monorepo:
@@ -376,6 +443,9 @@ npm --prefix client run lint
 
 # 3. Compile client production bundle
 npm --prefix client run build
+
+# 4. Compile standalone embed widget bundle
+npm --prefix client run build:embed
 ```
 
 ---

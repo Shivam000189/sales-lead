@@ -44,6 +44,16 @@ app.use(cors((req, callback) => {
     ? allowedOrigins
     : [...allowedOrigins, ...localOrigins];
 
+  // Scoped CORS (DARKMODE.md): Permit any origin for external embed lead submissions
+  const cleanPath = (req.path || req.url || "").split("?")[0].replace(/\/$/, "");
+  const isPublicLeadIntake =
+    cleanPath === "/api/leads" &&
+    (req.method === "POST" || req.method === "OPTIONS");
+
+  if (isPublicLeadIntake) {
+    return callback(null, { origin: true, credentials: false });
+  }
+
   if (!origin || origin === requestOrigin || origins.includes(origin)) {
     return callback(null, { origin: true, credentials: true });
   }

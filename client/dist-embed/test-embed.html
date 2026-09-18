@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HeroCRM Widget Shadow DOM Isolation Test</title>
+  <style>
+    /* Host website aggressive style overrides to test isolation */
+    * {
+      color: red !important;
+      background-color: #ffe6e6 !important;
+      border: 3px dashed red !important;
+      box-shadow: none !important;
+      font-family: monospace !important;
+    }
+    body {
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    p {
+      margin-bottom: 30px;
+    }
+    /* Reset on container element itself */
+    #hero-crm-lead-form {
+      all: initial;
+      display: block;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Host Website - With Hostile CSS (* { color: red !important; background-color: #ffe6e6 !important; })</h1>
+  <p>The form below is embedded inside an open Shadow DOM root. It should maintain its beautiful crisp slate/white styling, blue primary accents, and proper fonts unaffected by the red host stylesheet.</p>
+
+  <!-- HeroCRM Target Mount Node -->
+  <div id="hero-crm-lead-form"></div>
+
+  <!-- HeroCRM Standalone Embed Script -->
+  <script src="./widget.js" data-api-url="http://localhost:3000/api" defer></script>
+</body>
+</html>

@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import API from "../api/axios";
 import { Shell } from "./CrmPages";
+import { useTheme } from "../context/ThemeContext";
 
 const STAGE_COLORS = {
   NEW: "#6366f1",
@@ -132,6 +133,7 @@ function ConversionSummarySection() {
 }
 
 function FunnelWidget() {
+  const { isDark } = useTheme();
   const [funnelData, setFunnelData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -176,13 +178,13 @@ function FunnelWidget() {
           data={funnelData}
           margin={{ top: 10, right: 30, left: 30, bottom: 5 }}
         >
-          <XAxis type="number" allowDecimals={false} stroke="#94a3b8" />
+          <XAxis type="number" allowDecimals={false} stroke={isDark ? "#94a3b8" : "#64748b"} />
           <YAxis
             dataKey="label"
             type="category"
             width={110}
-            stroke="#94a3b8"
-            tick={{ fill: "#cbd5e1", fontSize: 12 }}
+            stroke={isDark ? "#94a3b8" : "#64748b"}
+            tick={{ fill: isDark ? "#cbd5e1" : "#334155", fontSize: 12 }}
           />
           <Tooltip
             content={({ active, payload }) => {
@@ -211,6 +213,7 @@ function FunnelWidget() {
 }
 
 function TimeseriesWidget() {
+  const { isDark } = useTheme();
   const [timeseriesData, setTimeseriesData] = useState([]);
   const [range, setRange] = useState("week");
   const [fromDate, setFromDate] = useState("");
@@ -317,9 +320,9 @@ function TimeseriesWidget() {
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="period" stroke="#94a3b8" tick={{ fill: "#94a3b8", fontSize: 11 }} />
-              <YAxis stroke="#94a3b8" tick={{ fill: "#94a3b8", fontSize: 11 }} allowDecimals={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#243b33" : "#e2e8f0"} />
+              <XAxis dataKey="period" stroke={isDark ? "#94a3b8" : "#64748b"} tick={{ fill: isDark ? "#94a3b8" : "#64748b", fontSize: 11 }} />
+              <YAxis stroke={isDark ? "#94a3b8" : "#64748b"} tick={{ fill: isDark ? "#94a3b8" : "#64748b", fontSize: 11 }} allowDecimals={false} />
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
@@ -337,7 +340,7 @@ function TimeseriesWidget() {
                   return null;
                 }}
               />
-              <Legend verticalAlign="top" height={36} wrapperStyle={{ color: "#cbd5e1" }} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ color: isDark ? "#cbd5e1" : "#475569" }} />
               <Area
                 type="monotone"
                 dataKey="created"
