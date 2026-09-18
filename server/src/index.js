@@ -10,6 +10,7 @@ const noteRoutes = require("./routes/noteRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const userRoutes = require("./routes/userRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 const cors = require("cors");
 
 
@@ -58,6 +59,7 @@ app.use("/api/users", userRoutes);
 app.use("/api", noteRoutes);
 app.use("/api", activityRoutes);
 app.use("/api", dashboardRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.use("/api", (_req, res) => {
   res.status(404).json({

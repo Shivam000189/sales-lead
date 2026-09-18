@@ -39,12 +39,18 @@ function Empty({ children }) {
   return <div className="empty">{children}</div>;
 }
 
-export function RequireAuth({ children }) {
-  return localStorage.getItem("token") ? (
-    children
-  ) : (
-    <Navigate to="/login" replace />
-  );
+export function RequireAuth({ children, adminOnly = false }) {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  if (adminOnly) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.role !== "admin") {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+  return children;
 }
 
 export function Shell({ children }) {
@@ -75,6 +81,11 @@ export function Shell({ children }) {
           <Link to="/leads/new">
             ＋ <span>New lead</span>
           </Link>
+          {user.role === "admin" && (
+            <Link to="/analytics">
+              ▲ <span>Analytics</span>
+            </Link>
+          )}
         </nav>
         <div className="profile">
           <div className="avatar">{(user.name || "U")[0]}</div>
@@ -600,9 +611,9 @@ export function LeadDetails() {
       })
       .catch((e) => setError(errorMessage(e)));
   // `load` is deliberately recreated for the current lead id and also used after mutations.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
   const addNote = async (e) => {
     e.preventDefault();
