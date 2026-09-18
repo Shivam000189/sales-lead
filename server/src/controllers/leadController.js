@@ -7,6 +7,12 @@ const {
   assignLead,
   deleteLead,
 } = require("../services/leadService");
+const Activity = require("../models/Activity");
+const User = require("../models/User");
+const {
+  emitLeadStatusChanged,
+  emitLeadAssigned,
+} = require("../services/socketEvents");
 
 
 // Create Lead
@@ -123,6 +129,14 @@ const assign = async (req, res) => {
       });
     }
 
+    await lead.populate("assignedTo", "name email role");
+
+    const activity = await Activity.findOne({ leadId: lead._id })
+      .sort({ createdAt: -1 })
+      .populate("performedBy", "name email role");
+
+    const assigner = await User.findById(req.user.id).select("name");
+    emitLeadAssigned(lead._id, lead, assignedTo, activity, assigner?.name);
 
     res.json({
       success:true,
@@ -220,6 +234,13 @@ const updateStatus = async (req, res) => {
       });
     }
 
+    await lead.populate("assignedTo", "name email role");
+
+    const activity = await Activity.findOne({ leadId: lead._id })
+      .sort({ createdAt: -1 })
+      .populate("performedBy", "name email role");
+
+    emitLeadStatusChanged(lead._id, lead, activity);
 
     res.json({
       success:true,

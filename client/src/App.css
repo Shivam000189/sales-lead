@@ -84,3 +84,24 @@
   .timeseries-controls { flex-direction: column; align-items: flex-start; }
 }
 
+/* Real-Time WebSocket Styles */
+.brand-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.socket-status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; transition: background 0.3s ease; }
+.socket-status-dot.online { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+.socket-status-dot.offline { background: #64748b; opacity: 0.6; }
+
+.socket-toast-container { position: fixed; top: 24px; right: 24px; z-index: 1100; max-width: 380px; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.socket-toast { display: flex; align-items: flex-start; gap: 12px; background: #0f172a; color: #f8fafc; padding: 14px 18px; border-radius: 10px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2); }
+.toast-icon { font-size: 18px; flex-shrink: 0; line-height: 1.2; }
+.toast-body { flex: 1; font-size: 13px; line-height: 1.4; }
+.toast-body strong { display: block; font-size: 13px; margin-bottom: 2px; color: #e2e8f0; }
+.toast-body p { margin: 0 0 6px; color: #94a3b8; font-size: 12px; }
+.toast-link { color: #38bdf8; font-size: 12px; font-weight: 600; text-decoration: underline; }
+.toast-close { border: 0; background: transparent; color: #94a3b8; font-size: 14px; cursor: pointer; padding: 2px; line-height: 1; margin-left: 4px; }
+.toast-close:hover { color: #f8fafc; }
+
+@keyframes slideIn {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+

@@ -1,9 +1,11 @@
 require("dotenv").config();
 
 const express = require("express");
+const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const connectDB = require("./config/db");
+const { initSocket } = require("./config/socket");
 const authRoutes = require("./routes/authRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const noteRoutes = require("./routes/noteRoutes");
@@ -92,6 +94,9 @@ app.use((error, _req, res, _next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+initSocket(server, { allowedOrigins, localOrigins });
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

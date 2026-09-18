@@ -3,6 +3,7 @@ const {
   getNotesByLead,
   deleteNote,
 } = require("../services/noteService");
+const { emitLeadNoteAdded } = require("../services/socketEvents");
 
 
 // Create Note
@@ -26,6 +27,10 @@ const create = async (req, res) => {
       req.user.id,
       text
     );
+
+    await note.populate("userId", "name email role");
+
+    emitLeadNoteAdded(req.params.id, note);
 
 
     res.status(201).json({

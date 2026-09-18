@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import API from "../api/axios";
+import { useSocket } from "../context/SocketContext";
 
 const STATUSES = [
   "NEW",
@@ -55,6 +56,7 @@ export function RequireAuth({ children, adminOnly = false }) {
 
 export function Shell({ children }) {
   const navigate = useNavigate();
+  const { connected, toast, dismissToast } = useSocket();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const logout = async () => {
     try {
@@ -67,10 +69,39 @@ export function Shell({ children }) {
   };
   return (
     <div className="app-shell">
+      {toast && (
+        <div className="socket-toast-container">
+          <div className="socket-toast">
+            <span className="toast-icon">🔔</span>
+            <div className="toast-body">
+              <strong>{toast.title}</strong>
+              <p>{toast.message}</p>
+              {toast.leadId && (
+                <Link
+                  to={`/leads/${toast.leadId}`}
+                  className="toast-link"
+                  onClick={dismissToast}
+                >
+                  View Lead →
+                </Link>
+              )}
+            </div>
+            <button className="toast-close" onClick={dismissToast} title="Dismiss">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <aside className="sidebar">
-        <Link to="/dashboard" className="brand">
-          <span>H</span> HeroCRM
-        </Link>
+        <div className="brand-row">
+          <Link to="/dashboard" className="brand">
+            <span>H</span> HeroCRM
+          </Link>
+          <span
+            className={`socket-status-dot ${connected ? "online" : "offline"}`}
+            title={connected ? "Live sync active" : "Live sync offline"}
+          />
+        </div>
         <nav>
           <Link to="/dashboard">
             ▦ <span>Overview</span>
@@ -275,6 +306,7 @@ export function Dashboard() {
 
 export function Leads() {
   const navigate = useNavigate();
+  const { socket } = useSocket();
   const [result, setResult] = useState({ leads: [], pagination: {} });
   const [query, setQuery] = useState({
     page: 1,
@@ -286,6 +318,35 @@ export function Leads() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleLeadUpdated = (updated) => {
+      setResult((prev) => {
+        if (!prev.leads || !prev.leads.length) return prev;
+        const index = prev.leads.findIndex((l) => l._id === updated.leadId);
+        if (index === -1) return prev;
+        const newLeads = [...prev.leads];
+        newLeads[index] = {
+          ...newLeads[index],
+          ...(updated.lead || {}),
+          status: updated.status || newLeads[index].status,
+          assignedTo:
+            updated.assignedTo !== undefined
+              ? updated.assignedTo
+              : newLeads[index].assignedTo,
+          updatedAt: updated.updatedAt || newLeads[index].updatedAt,
+        };
+        return { ...prev, leads: newLeads };
+      });
+    };
+
+    socket.on("dashboard:lead-updated", handleLeadUpdated);
+    return () => {
+      socket.off("dashboard:lead-updated", handleLeadUpdated);
+    };
+  }, [socket]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(true);
@@ -588,6 +649,7 @@ export function LeadForm({ edit = false }) {
 
 export function LeadDetails() {
   const { id } = useParams();
+  const { socket } = useSocket();
   const [lead, setLead] = useState(null);
   const [notes, setNotes] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -615,6 +677,73 @@ export function LeadDetails() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    socket.emit("join-lead", id);
+
+    const onConnect = () => {
+      socket.emit("join-lead", id);
+    };
+
+    const onStatusChanged = (data) => {
+      if (data.leadId === id) {
+        setLead((prev) => (prev ? { ...prev, status: data.status, ...(data.lead || {}) } : prev));
+        if (data.activity) {
+          setActivities((prev) => {
+            const exists = prev.some((a) => a._id === data.activity._id);
+            return exists ? prev : [data.activity, ...prev];
+          });
+        }
+      }
+    };
+
+    const onAssigned = (data) => {
+      if (data.leadId === id) {
+        setLead((prev) => (prev ? { ...prev, assignedTo: data.assignedTo, ...(data.lead || {}) } : prev));
+        if (data.activity) {
+          setActivities((prev) => {
+            const exists = prev.some((a) => a._id === data.activity._id);
+            return exists ? prev : [data.activity, ...prev];
+          });
+        }
+      }
+    };
+
+    const onNoteAdded = (data) => {
+      if (data.leadId === id && data.note) {
+        setNotes((prev) => {
+          const exists = prev.some((n) => n._id === data.note._id);
+          return exists ? prev : [data.note, ...prev];
+        });
+      }
+    };
+
+    const onActivityAdded = (data) => {
+      if (data.leadId === id && data.activity) {
+        setActivities((prev) => {
+          const exists = prev.some((a) => a._id === data.activity._id);
+          return exists ? prev : [data.activity, ...prev];
+        });
+      }
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("lead:status-changed", onStatusChanged);
+    socket.on("lead:assigned", onAssigned);
+    socket.on("lead:note-added", onNoteAdded);
+    socket.on("lead:activity-added", onActivityAdded);
+
+    return () => {
+      socket.emit("leave-lead", id);
+      socket.off("connect", onConnect);
+      socket.off("lead:status-changed", onStatusChanged);
+      socket.off("lead:assigned", onAssigned);
+      socket.off("lead:note-added", onNoteAdded);
+      socket.off("lead:activity-added", onActivityAdded);
+    };
+  }, [socket, id]);
   const addNote = async (e) => {
     e.preventDefault();
     if (!note.trim()) return;

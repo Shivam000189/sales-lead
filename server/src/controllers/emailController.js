@@ -3,6 +3,7 @@ const User = require("../models/User");
 const { sendEmail } = require("../services/emailService");
 const { createActivity } = require("../services/activityService");
 const { buildLeadEmailHtml } = require("../utils/emailTemplates");
+const { emitLeadActivityAdded } = require("../services/socketEvents");
 
 const sendLeadEmail = async (req, res) => {
   try {
@@ -65,6 +66,8 @@ const sendLeadEmail = async (req, res) => {
     );
 
     await activity.populate("performedBy", "name email role");
+
+    emitLeadActivityAdded(lead._id, activity);
 
     return res.status(200).json({
       success: true,
