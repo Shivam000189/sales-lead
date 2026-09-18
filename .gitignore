@@ -6,3 +6,4 @@ server/logs
 *.log
 DEPLOYMENT.md
 .env.example
+.planning
